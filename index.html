@@ -14,23 +14,25 @@
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <style>
         body { background: #f0f2f5; font-family: 'Segoe UI', Roboto, system-ui; }
-        .card-hover:hover { transform: translateY(-2px); transition: all 0.2s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
         .badge { @apply px-2 py-1 rounded-full text-xs font-semibold; }
         .tab-active { border-bottom: 3px solid #2563eb; color: #1e3a8a; font-weight: 600; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
         .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        .alert-card { transition: all 0.2s; }
+        .alert-card:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        // ---------- UTILS ----------
-        const STORAGE_KEY = 'escuela_cadetes_data';
+        // ---------- STORAGE KEYS ----------
+        const STORAGE_CADETES = 'escuela_cadetes_data';
+        const STORAGE_VISITAS = 'escuela_visitas_data';
         
-        // Datos por defecto (cadetes de ejemplo)
+        // ---------- DATOS DE EJEMPLO PARA CADETES (igual que antes, pero aseguramos algunos con carpeta inactiva) ----------
         const generarCadetesEjemplo = () => {
             const nombres = ["Luciano", "Camila", "Santiago", "Valentina", "Mateo", "Renata", "Joaquín", "Agustina", "Tomás", "Lara", "Facundo", "Delfina"];
             const apellidos = ["Gutiérrez", "Fernández", "López", "Martínez", "Rodríguez", "Pérez", "Gómez", "Sánchez", "Romero", "Díaz", "Álvarez", "Molina"];
@@ -74,6 +76,10 @@
                     { relation: "Madre", name: `María ${apellidos[(i+1) % apellidos.length]}`, phone: "351-7654321" }
                 ];
                 if (Math.random() > 0.6) parentesco.push({ relation: "Tutor", name: "Roberto Fernández", phone: "351-9988776" });
+                
+                // Forzar algunos con carpeta médica inactiva para mostrar alertas
+                const medicalActive = (i % 5 === 0) ? false : (Math.random() > 0.2);
+                
                 cadetes.push({
                     id: idCounter++,
                     firstName: nombres[i % nombres.length],
@@ -91,7 +97,7 @@
                     trades: [oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)], oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)]].slice(0,2),
                     family: parentesco,
                     medical: {
-                        active: Math.random() > 0.2,
+                        active: medicalActive,
                         history: historialMedico,
                         allergies: Math.random() > 0.8 ? "Penicilina, polen" : "Ninguna conocida",
                         conditions: Math.random() > 0.7 ? "Asma leve" : "Sin patologías",
@@ -104,28 +110,54 @@
             return cadetes;
         };
         
-        // Inicializar datos desde localStorage o generar nuevos
+        // Inicializar cadetes
         let cadetesData = [];
-        const loadData = () => {
-            const stored = localStorage.getItem(STORAGE_KEY);
+        const loadCadetes = () => {
+            const stored = localStorage.getItem(STORAGE_CADETES);
             if (stored) {
                 cadetesData = JSON.parse(stored);
             } else {
                 cadetesData = generarCadetesEjemplo();
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(cadetesData));
+                localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
             }
         };
-        loadData();
+        loadCadetes();
         
-        const saveData = () => {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(cadetesData));
+        const saveCadetes = () => {
+            localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
         };
         
-        // Función para obtener años y secciones únicas
-        const getUniqueYearsSections = () => {
-            const years = [...new Set(cadetesData.map(c => c.year))].sort();
-            const sections = ['A','B','C'];
-            return { years, sections };
+        // Inicializar visitas
+        let visitasData = [];
+        const loadVisitas = () => {
+            const stored = localStorage.getItem(STORAGE_VISITAS);
+            if (stored) {
+                visitasData = JSON.parse(stored);
+            } else {
+                // Visitas de ejemplo
+                visitasData = [
+                    { id: 1, dni: "30123456", nombre: "Juan Pérez", tipo: "Proveedor", ingreso: "2025-04-07 09:30", salida: null, motivo: "Entrega de uniformes" },
+                    { id: 2, dni: "27876543", nombre: "María Gómez", tipo: "Visita familiar", ingreso: "2025-04-07 10:15", salida: "2025-04-07 11:45", motivo: "Ver a cadete López" },
+                    { id: 3, dni: "33456789", nombre: "Carlos Ruiz", tipo: "Mantenimiento", ingreso: "2025-04-07 08:00", salida: null, motivo: "Reparación de aires acondicionados" }
+                ];
+                localStorage.setItem(STORAGE_VISITAS, JSON.stringify(visitasData));
+            }
+        };
+        loadVisitas();
+        
+        const saveVisitas = () => {
+            localStorage.setItem(STORAGE_VISITAS, JSON.stringify(visitasData));
+        };
+        
+        // Funciones auxiliares
+        const hoy = () => new Date().toISOString().split('T')[0];
+        const ahora = () => {
+            const d = new Date();
+            return `${d.toISOString().split('T')[0]} ${d.toHoursMinutes()}`;
+        };
+        // Para formato hora
+        Date.prototype.toHoursMinutes = function() {
+            return `${this.getHours().toString().padStart(2,'0')}:${this.getMinutes().toString().padStart(2,'0')}`;
         };
         
         // ---------- COMPONENTES ----------
@@ -147,7 +179,7 @@
             );
         };
         
-        // Formulario de cadete (crear/editar)
+        // Formulario de cadete (igual que antes, resumido por brevedad, pero completo)
         const CadeteForm = ({ cadete, onSave, onCancel }) => {
             const [formData, setFormData] = useState(cadete || {
                 firstName: '', lastName: '', dni: '', address: '', birthDate: '', year: 1, section: 'A',
@@ -174,7 +206,6 @@
             
             const handleSubmit = (e) => {
                 e.preventDefault();
-                // Validaciones básicas
                 if (!formData.firstName || !formData.lastName || !formData.dni) {
                     alert("Complete nombre, apellido y DNI");
                     return;
@@ -191,15 +222,9 @@
                         <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleChange} className="border p-2 rounded" required />
                         <input name="address" placeholder="Dirección" value={formData.address} onChange={handleChange} className="border p-2 rounded" />
                         <input name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} className="border p-2 rounded" />
-                        <select name="year" value={formData.year} onChange={handleChange} className="border p-2 rounded">
-                            <option value={1}>1° Año</option><option value={2}>2° Año</option><option value={3}>3° Año</option>
-                        </select>
-                        <select name="section" value={formData.section} onChange={handleChange} className="border p-2 rounded">
-                            <option>A</option><option>B</option><option>C</option>
-                        </select>
-                        <select name="status" value={formData.status} onChange={handleChange} className="border p-2 rounded">
-                            <option value="active">Activo</option><option value="inactive">Inactivo</option>
-                        </select>
+                        <select name="year" value={formData.year} onChange={handleChange} className="border p-2 rounded"><option value={1}>1° Año</option><option value={2}>2° Año</option><option value={3}>3° Año</option></select>
+                        <select name="section" value={formData.section} onChange={handleChange} className="border p-2 rounded"><option>A</option><option>B</option><option>C</option></select>
+                        <select name="status" value={formData.status} onChange={handleChange} className="border p-2 rounded"><option value="active">Activo</option><option value="inactive">Inactivo</option></select>
                         {formData.status === 'inactive' && <input name="inactivityReason" placeholder="Motivo de inactividad" value={formData.inactivityReason} onChange={handleChange} className="border p-2 rounded" />}
                         <input name="profession" placeholder="Profesión" value={formData.profession} onChange={handleChange} className="border p-2 rounded" />
                         <input name="studies" placeholder="Estudios" value={formData.studies} onChange={handleChange} className="border p-2 rounded" />
@@ -229,12 +254,164 @@
             );
         };
         
-        // Componente principal
+        // Componente de detalle de cadete
+        const CadeteDetailPage = ({ cadete, onEdit }) => {
+            return (
+                <div className="space-y-5">
+                    <div className="flex justify-between items-start"><div className="flex items-center gap-4"><img src={cadete.photoUrl} className="w-20 h-20 rounded-full border-2 border-blue-500 object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/2.jpg'} /><div><h2 className="text-2xl font-bold">{cadete.firstName} {cadete.lastName}</h2><p>DNI: {cadete.dni} | {cadete.year}° {cadete.section} | {cadete.status === 'active' ? '✅ Activo' : `❌ Inactivo - ${cadete.inactivityReason}`}</p></div></div><button onClick={onEdit} className="bg-blue-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-edit"></i> Editar</button></div>
+                    <div className="grid md:grid-cols-2 gap-3"><div className="bg-gray-50 p-2 rounded"><i className="fas fa-map-marker-alt"></i> {cadete.address}</div><div><i className="fas fa-birthday-cake"></i> {cadete.birthDate}</div><div><i className="fas fa-briefcase"></i> {cadete.profession}</div><div><i className="fas fa-graduation-cap"></i> {cadete.studies}</div><div><i className="fas fa-tools"></i> {cadete.trades.join(", ")}</div><div><i className="fas fa-heartbeat"></i> Carpeta médica: {cadete.medical.active ? 'Activa' : 'Inactiva'}</div></div>
+                    <div><h3 className="font-bold">Parentesco</h3>{cadete.family.map((f,i)=><div key={i} className="bg-indigo-50 inline-block m-1 px-2 py-1 rounded">{f.relation}: {f.name} ({f.phone})</div>)}</div>
+                    {cadete.medical.familyDeath.hasDeath && <div className="bg-red-50 p-2 rounded"><i className="fas fa-heart-broken"></i> {cadete.medical.familyDeath.details}</div>}
+                    <div><h3 className="font-bold">Historial médico</h3><div className="max-h-32 overflow-auto border p-2">{cadete.medical.history.map((h,i)=><div key={i} className="text-sm">{h.date}: {h.description}</div>)}</div></div>
+                    <div><h3 className="font-bold">Notas</h3><table className="w-full text-sm"><thead className="bg-gray-100"><tr><th>Materia</th><th>Nota</th></tr></thead><tbody>{cadete.grades.map(g=><tr key={g.subject}><td>{g.subject}</td><td>{g.grade}</td></tr>)}</tbody></table></div>
+                    <div><h3 className="font-bold">Asistencia reciente</h3><div className="flex flex-wrap gap-1">{cadete.attendanceRecords.slice(0,10).map(a=><span key={a.date} className={`px-2 py-1 rounded text-xs ${a.status==='present'?'bg-green-200':'bg-red-200'}`}>{a.date}: {a.status==='present'?'✔️':'❌'}</span>)}</div></div>
+                </div>
+            );
+        };
+        
+        // Componente de registro de visitas externas
+        const VisitasManager = ({ visitas, onAdd, onRegistrarSalida, onDelete }) => {
+            const [showForm, setShowForm] = useState(false);
+            const [nuevaVisita, setNuevaVisita] = useState({ dni: '', nombre: '', tipo: 'Proveedor', motivo: '', ingreso: '', salida: null });
+            
+            const handleInputChange = (e) => {
+                setNuevaVisita({ ...nuevaVisita, [e.target.name]: e.target.value });
+            };
+            
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!nuevaVisita.dni || !nuevaVisita.nombre || !nuevaVisita.motivo) {
+                    alert("Complete DNI, nombre y motivo");
+                    return;
+                }
+                const now = new Date();
+                const ingresoStr = `${now.toISOString().split('T')[0]} ${now.toHoursMinutes()}`;
+                onAdd({ ...nuevaVisita, id: Date.now(), ingreso: ingresoStr, salida: null });
+                setNuevaVisita({ dni: '', nombre: '', tipo: 'Proveedor', motivo: '', ingreso: '', salida: null });
+                setShowForm(false);
+            };
+            
+            const visitasActivas = visitas.filter(v => !v.salida);
+            const visitasHistoricas = visitas.filter(v => v.salida);
+            
+            return (
+                <div className="space-y-6">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold"><i className="fas fa-door-open"></i> Registro de Visitas Externas</h2>
+                        <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-4 py-2 rounded-md"><i className="fas fa-plus"></i> Nueva Visita</button>
+                    </div>
+                    
+                    {/* Visitas Activas (sin salida) */}
+                    <div className="border rounded-lg p-4 bg-yellow-50">
+                        <h3 className="font-bold text-lg mb-2"><i className="fas fa-clock"></i> Visitas Activas (sin registrar salida)</h3>
+                        {visitasActivas.length === 0 ? <p className="text-gray-500">No hay visitas activas.</p> : (
+                            <div className="space-y-2">
+                                {visitasActivas.map(v => (
+                                    <div key={v.id} className="bg-white p-3 rounded shadow flex justify-between items-center flex-wrap">
+                                        <div><strong>{v.nombre}</strong> (DNI: {v.dni}) - {v.tipo}<br/><span className="text-xs">Ingreso: {v.ingreso} - Motivo: {v.motivo}</span></div>
+                                        <div className="flex gap-2 mt-2 sm:mt-0">
+                                            <button onClick={() => onRegistrarSalida(v.id)} className="bg-green-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-sign-out-alt"></i> Registrar Salida</button>
+                                            <button onClick={() => onDelete(v.id)} className="bg-red-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-trash"></i></button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Historial de visitas */}
+                    <div className="border rounded-lg p-4">
+                        <h3 className="font-bold text-lg mb-2"><i className="fas fa-history"></i> Historial de Visitas</h3>
+                        <div className="max-h-96 overflow-auto">
+                            <table className="min-w-full text-sm border">
+                                <thead className="bg-gray-100 sticky top-0">
+                                    <tr><th className="p-2">DNI</th><th>Nombre</th><th>Tipo</th><th>Ingreso</th><th>Salida</th><th>Motivo</th><th></th></tr>
+                                </thead>
+                                <tbody>
+                                    {visitasHistoricas.map(v => (
+                                        <tr key={v.id} className="border-b">
+                                            <td className="p-2">{v.dni}</td><td>{v.nombre}</td><td>{v.tipo}</td><td>{v.ingreso}</td><td>{v.salida}</td><td className="max-w-xs">{v.motivo}</td>
+                                            <td><button onClick={() => onDelete(v.id)} className="text-red-500"><i className="fas fa-trash"></i></button></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {/* Modal para nueva visita */}
+                    <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Registrar Ingreso de Visita">
+                        <form onSubmit={handleSubmit} className="space-y-3">
+                            <input name="dni" placeholder="DNI" value={nuevaVisita.dni} onChange={handleInputChange} className="border p-2 rounded w-full" required />
+                            <input name="nombre" placeholder="Nombre completo" value={nuevaVisita.nombre} onChange={handleInputChange} className="border p-2 rounded w-full" required />
+                            <select name="tipo" value={nuevaVisita.tipo} onChange={handleInputChange} className="border p-2 rounded w-full">
+                                <option>Proveedor</option><option>Visita familiar</option><option>Mantenimiento</option><option>Personal externo</option><option>Otro</option>
+                            </select>
+                            <input name="motivo" placeholder="Motivo de la visita" value={nuevaVisita.motivo} onChange={handleInputChange} className="border p-2 rounded w-full" required />
+                            <div className="flex justify-end gap-2 pt-2">
+                                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded">Cancelar</button>
+                                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Registrar Ingreso</button>
+                            </div>
+                        </form>
+                    </Modal>
+                </div>
+            );
+        };
+        
+        // Componente de Alertas del Día
+        const AlertasPanel = ({ cadetes, visitas }) => {
+            const hoyStr = hoy();
+            // Cadetes con carpeta médica inactiva
+            const carpetasInactivas = cadetes.filter(c => !c.medical.active);
+            // Bajas recientes (últimos 7 días) - Simulamos que los inactivos tienen fecha de baja aproximada (usamos inactivityReason para saber)
+            // Como no tenemos fecha de baja exacta, consideraremos que los que están inactivos son "recientes" para demo. En un sistema real se guardaría fecha.
+            const bajasRecientes = cadetes.filter(c => c.status === 'inactive');
+            // Visitas activas de hoy
+            const visitasActivasHoy = visitas.filter(v => !v.salida && v.ingreso.startsWith(hoyStr));
+            // Eventos: por ejemplo, cumpleaños de cadetes (opcional)
+            const cumpleanosHoy = cadetes.filter(c => c.birthDate.slice(5) === hoyStr.slice(5));
+            
+            return (
+                <div className="bg-white rounded-xl shadow-md p-5 mb-6">
+                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><i className="fas fa-bell text-yellow-500"></i> Alertas del Día</h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded alert-card">
+                            <h3 className="font-bold text-red-700"><i className="fas fa-notes-medical"></i> Carpetas Médicas Inactivas</h3>
+                            {carpetasInactivas.length === 0 ? <p className="text-sm">✅ Todas las carpetas están activas.</p> : (
+                                <ul className="list-disc pl-5 text-sm">{carpetasInactivas.map(c => <li key={c.id}>{c.firstName} {c.lastName} (DNI: {c.dni})</li>)}</ul>
+                            )}
+                        </div>
+                        <div className="bg-orange-50 border-l-4 border-orange-500 p-3 rounded alert-card">
+                            <h3 className="font-bold text-orange-700"><i className="fas fa-user-slash"></i> Bajas Recientes</h3>
+                            {bajasRecientes.length === 0 ? <p className="text-sm">No hay bajas recientes.</p> : (
+                                <ul className="list-disc pl-5 text-sm">{bajasRecientes.map(c => <li key={c.id}>{c.firstName} {c.lastName} - Motivo: {c.inactivityReason || "No especificado"}</li>)}</ul>
+                            )}
+                        </div>
+                        <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded alert-card">
+                            <h3 className="font-bold text-blue-700"><i className="fas fa-door-open"></i> Visitas Activas Hoy</h3>
+                            {visitasActivasHoy.length === 0 ? <p className="text-sm">No hay visitas activas en este momento.</p> : (
+                                <ul className="list-disc pl-5 text-sm">{visitasActivasHoy.map(v => <li key={v.id}>{v.nombre} ({v.tipo}) - Ingreso: {v.ingreso.split(' ')[1]}</li>)}</ul>
+                            )}
+                        </div>
+                        {cumpleanosHoy.length > 0 && (
+                            <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded alert-card">
+                                <h3 className="font-bold text-green-700"><i className="fas fa-birthday-cake"></i> Cumpleaños</h3>
+                                <ul className="list-disc pl-5 text-sm">{cumpleanosHoy.map(c => <li key={c.id}>{c.firstName} {c.lastName}</li>)}</ul>
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-3">* Actualizado automáticamente. Las alertas incluyen estado de carpetas médicas, bajas y visitas pendientes de salida.</p>
+                </div>
+            );
+        };
+        
+        // Componente principal App
         const App = () => {
             const [cadetes, setCadetes] = useState(cadetesData);
-            const [activeTab, setActiveTab] = useState('cadetes');
+            const [visitas, setVisitas] = useState(visitasData);
+            const [activeTab, setActiveTab] = useState('dashboard');
             const [selectedCadete, setSelectedCadete] = useState(null);
-            const [showModal, setShowModal] = useState(false);
+            const [showCadeteModal, setShowCadeteModal] = useState(false);
             const [editingCadete, setEditingCadete] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
             const [filtroYear, setFiltroYear] = useState('todos');
@@ -242,34 +419,55 @@
             // Asistencias
             const [asistenciaYear, setAsistenciaYear] = useState(1);
             const [asistenciaSection, setAsistenciaSection] = useState('A');
-            const [asistenciaDate, setAsistenciaDate] = useState(new Date().toISOString().split('T')[0]);
+            const [asistenciaDate, setAsistenciaDate] = useState(hoy());
             
-            // Guardar cambios
+            // Persistencia
             useEffect(() => {
                 cadetesData = cadetes;
-                saveData();
+                saveCadetes();
             }, [cadetes]);
+            
+            useEffect(() => {
+                visitasData = visitas;
+                saveVisitas();
+            }, [visitas]);
             
             const updateCadete = (updated) => {
                 setCadetes(prev => prev.map(c => c.id === updated.id ? updated : c));
                 if (selectedCadete?.id === updated.id) setSelectedCadete(updated);
-                setShowModal(false);
+                setShowCadeteModal(false);
                 setEditingCadete(null);
             };
             
             const addCadete = (newCadete) => {
                 setCadetes(prev => [...prev, newCadete]);
-                setShowModal(false);
+                setShowCadeteModal(false);
             };
             
             const deleteCadete = (id) => {
-                if (confirm("¿Eliminar cadete? Esta acción es permanente.")) {
+                if (confirm("¿Eliminar cadete?")) {
                     setCadetes(prev => prev.filter(c => c.id !== id));
                     if (selectedCadete?.id === id) setSelectedCadete(null);
                 }
             };
             
-            // Filtrar cadetes por búsqueda y año/sección
+            const addVisita = (visita) => {
+                setVisitas(prev => [...prev, visita]);
+            };
+            
+            const registrarSalidaVisita = (id) => {
+                const now = new Date();
+                const salidaStr = `${now.toISOString().split('T')[0]} ${now.toHoursMinutes()}`;
+                setVisitas(prev => prev.map(v => v.id === id ? { ...v, salida: salidaStr } : v));
+            };
+            
+            const deleteVisita = (id) => {
+                if (confirm("Eliminar registro de visita?")) {
+                    setVisitas(prev => prev.filter(v => v.id !== id));
+                }
+            };
+            
+            // Filtros para cadetes
             const filteredCadetes = cadetes.filter(c => {
                 const matchSearch = `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(searchTerm.toLowerCase());
                 const matchYear = filtroYear === 'todos' || c.year === parseInt(filtroYear);
@@ -283,18 +481,13 @@
             const inactivos = cadetes.filter(c => c.status === 'inactive').length;
             const bajas = cadetes.filter(c => c.status === 'inactive').map(c => ({ nombre: `${c.firstName} ${c.lastName}`, profesion: c.profession, motivo: c.inactivityReason, año: c.year, seccion: c.section }));
             
-            // Asistencias por año/sección: obtener cadetes de ese curso
+            // Asistencias por curso
             const cadetesCurso = cadetes.filter(c => c.year === asistenciaYear && c.section === asistenciaSection);
-            // Obtener asistencia de hoy para ese curso (si no existe, crear registros)
-            const getAsistenciaForDate = () => {
-                return cadetesCurso.map(cadete => {
-                    const record = cadete.attendanceRecords.find(r => r.date === asistenciaDate);
-                    return { cadeteId: cadete.id, nombre: `${cadete.firstName} ${cadete.lastName}`, status: record ? record.status : 'present' };
-                });
-            };
-            
+            const getAsistenciaForDate = () => cadetesCurso.map(cadete => {
+                const record = cadete.attendanceRecords.find(r => r.date === asistenciaDate);
+                return { cadeteId: cadete.id, nombre: `${cadete.firstName} ${cadete.lastName}`, status: record ? record.status : 'present' };
+            });
             const [asistenciaList, setAsistenciaList] = useState(() => getAsistenciaForDate());
-            
             useEffect(() => {
                 setAsistenciaList(getAsistenciaForDate());
             }, [asistenciaYear, asistenciaSection, asistenciaDate, cadetes]);
@@ -316,7 +509,6 @@
                 setAsistenciaList(prev => prev.map(item => item.cadeteId === cadeteId ? { ...item, status: newStatus } : item));
             };
             
-            // Vista de asistencia general por año/sección
             const asistenciaGeneralPorCurso = () => {
                 const res = {};
                 for (let year of [1,2,3]) {
@@ -328,7 +520,6 @@
                 }
                 return res;
             };
-            
             const asistenciaStats = asistenciaGeneralPorCurso();
             
             return (
@@ -341,16 +532,44 @@
                     </header>
                     
                     <div className="bg-white border-b shadow-sm">
-                        <div className="container mx-auto px-4 flex flex-wrap gap-4">
+                        <div className="container mx-auto px-4 flex flex-wrap gap-2">
+                            <button onClick={() => setActiveTab('dashboard')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'dashboard' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-tachometer-alt"></i> Dashboard</button>
                             <button onClick={() => { setActiveTab('cadetes'); setSelectedCadete(null); }} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'cadetes' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-id-card"></i> Cadetes</button>
                             <button onClick={() => setActiveTab('asistenciaDiaria')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'asistenciaDiaria' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-calendar-check"></i> Cargar Asistencia</button>
                             <button onClick={() => setActiveTab('reporteAsistencia')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'reporteAsistencia' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-chart-line"></i> Reporte Asistencia</button>
                             <button onClick={() => setActiveTab('estadisticas')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'estadisticas' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-chart-simple"></i> Estadísticas</button>
+                            <button onClick={() => setActiveTab('visitas')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'visitas' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-door-open"></i> Visitas Externas</button>
                         </div>
                     </div>
                     
                     <div className="container mx-auto px-4 py-6">
-                        {/* PESTAÑA CADETES */}
+                        {/* DASHBOARD CON ALERTAS */}
+                        {activeTab === 'dashboard' && (
+                            <div>
+                                <AlertasPanel cadetes={cadetes} visitas={visitas} />
+                                <div className="grid md:grid-cols-2 gap-6 mt-4">
+                                    <div className="bg-white rounded-xl shadow-md p-5">
+                                        <h2 className="text-xl font-bold mb-3">Resumen Rápido</h2>
+                                        <p><i className="fas fa-graduation-cap"></i> Total cadetes: {total}</p>
+                                        <p><i className="fas fa-check-circle text-green-600"></i> Activos: {activos}</p>
+                                        <p><i className="fas fa-user-slash text-red-600"></i> Inactivos: {inactivos}</p>
+                                        <p><i className="fas fa-door-open"></i> Visitas activas hoy: {visitas.filter(v => !v.salida && v.ingreso.startsWith(hoy())).length}</p>
+                                        <hr className="my-3"/>
+                                        <button onClick={() => setActiveTab('visitas')} className="text-blue-600">Ir a gestionar visitas →</button>
+                                    </div>
+                                    <div className="bg-white rounded-xl shadow-md p-5">
+                                        <h2 className="text-xl font-bold mb-3">Acciones Rápidas</h2>
+                                        <div className="flex flex-col gap-2">
+                                            <button onClick={() => { setEditingCadete(null); setShowCadeteModal(true); }} className="bg-blue-600 text-white p-2 rounded"><i className="fas fa-user-plus"></i> Nuevo Cadete</button>
+                                            <button onClick={() => setActiveTab('asistenciaDiaria')} className="bg-green-600 text-white p-2 rounded"><i className="fas fa-calendar-check"></i> Cargar Asistencia Hoy</button>
+                                            <button onClick={() => setActiveTab('visitas')} className="bg-purple-600 text-white p-2 rounded"><i className="fas fa-door-open"></i> Registrar Visita Externa</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* PESTAÑA CADETES (igual que antes) */}
                         {activeTab === 'cadetes' && (
                             <div className="flex flex-col lg:flex-row gap-6">
                                 <div className="lg:w-1/2 xl:w-2/5 bg-white rounded-xl shadow-md p-4">
@@ -358,43 +577,42 @@
                                         <input type="text" placeholder="Buscar por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="border rounded-md px-3 py-2 flex-1 text-sm" />
                                         <select value={filtroYear} onChange={e => setFiltroYear(e.target.value)} className="border rounded-md px-3 py-2 text-sm"><option value="todos">Todos los años</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select>
                                         <select value={filtroSeccion} onChange={e => setFiltroSeccion(e.target.value)} className="border rounded-md px-3 py-2 text-sm"><option value="todos">Todas</option><option>A</option><option>B</option><option>C</option></select>
-                                        <button onClick={() => { setEditingCadete(null); setShowModal(true); }} className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm flex items-center gap-1"><i className="fas fa-plus"></i> Nuevo Cadete</button>
+                                        <button onClick={() => { setEditingCadete(null); setShowCadeteModal(true); }} className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm"><i className="fas fa-plus"></i> Nuevo</button>
                                     </div>
                                     <div className="max-h-[70vh] overflow-y-auto space-y-2">
                                         {filteredCadetes.map(cadete => (
                                             <div key={cadete.id} onClick={() => setSelectedCadete(cadete)} className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 border ${selectedCadete?.id === cadete.id ? 'bg-blue-50 border-blue-400' : 'hover:bg-gray-50 border-gray-200'}`}>
                                                 <img src={cadete.photoUrl} className="w-12 h-12 rounded-full object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/1.jpg'} />
                                                 <div className="flex-1"><div className="font-bold">{cadete.firstName} {cadete.lastName}</div><div className="text-xs text-gray-500">DNI: {cadete.dni} | {cadete.year}°{cadete.section}</div><div className={`badge text-xs ${cadete.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{cadete.status === 'active' ? 'Activo' : 'Inactivo'}</div></div>
-                                                <div className="flex gap-2"><button onClick={(e) => { e.stopPropagation(); setEditingCadete(cadete); setShowModal(true); }} className="text-blue-500"><i className="fas fa-edit"></i></button><button onClick={(e) => { e.stopPropagation(); deleteCadete(cadete.id); }} className="text-red-500"><i className="fas fa-trash"></i></button></div>
+                                                <div className="flex gap-2"><button onClick={(e) => { e.stopPropagation(); setEditingCadete(cadete); setShowCadeteModal(true); }} className="text-blue-500"><i className="fas fa-edit"></i></button><button onClick={(e) => { e.stopPropagation(); deleteCadete(cadete.id); }} className="text-red-500"><i className="fas fa-trash"></i></button></div>
                                             </div>
                                         ))}
                                     </div>
                                 </div>
                                 <div className="lg:w-1/2 xl:w-3/5 bg-white rounded-xl shadow-md p-5 overflow-y-auto max-h-[80vh]">
-                                    {selectedCadete ? <CadeteDetailPage cadete={selectedCadete} onEdit={() => { setEditingCadete(selectedCadete); setShowModal(true); }} /> : <div className="flex flex-col items-center justify-center h-64 text-gray-400"><i className="fas fa-user-graduate text-6xl mb-3"></i><p>Selecciona un cadete para ver su expediente</p></div>}
+                                    {selectedCadete ? <CadeteDetailPage cadete={selectedCadete} onEdit={() => { setEditingCadete(selectedCadete); setShowCadeteModal(true); }} /> : <div className="flex flex-col items-center justify-center h-64 text-gray-400"><i className="fas fa-user-graduate text-6xl mb-3"></i><p>Selecciona un cadete</p></div>}
                                 </div>
                             </div>
                         )}
                         
-                        {/* PESTAÑA CARGAR ASISTENCIA POR CURSO */}
+                        {/* PESTAÑA ASISTENCIA DIARIA */}
                         {activeTab === 'asistenciaDiaria' && (
                             <div className="bg-white rounded-xl shadow-md p-5">
-                                <h2 className="text-xl font-bold mb-4"><i className="fas fa-calendar-alt"></i> Cargar Asistencia Diaria por Curso</h2>
+                                <h2 className="text-xl font-bold mb-4">Cargar Asistencia Diaria por Curso</h2>
                                 <div className="flex flex-wrap gap-4 mb-5">
                                     <div><label className="block text-sm">Año</label><select value={asistenciaYear} onChange={e => setAsistenciaYear(parseInt(e.target.value))} className="border rounded p-2"><option value={1}>1° Año</option><option value={2}>2° Año</option><option value={3}>3° Año</option></select></div>
                                     <div><label className="block text-sm">Sección</label><select value={asistenciaSection} onChange={e => setAsistenciaSection(e.target.value)} className="border rounded p-2"><option>A</option><option>B</option><option>C</option></select></div>
                                     <div><label className="block text-sm">Fecha</label><input type="date" value={asistenciaDate} onChange={e => setAsistenciaDate(e.target.value)} className="border rounded p-2" /></div>
                                 </div>
                                 <div className="overflow-x-auto"><table className="min-w-full border"><thead className="bg-gray-100"><tr><th className="p-2 border">Cadete</th><th className="p-2 border">Asistencia</th></tr></thead><tbody>{asistenciaList.map(item => (<tr key={item.cadeteId}><td className="p-2 border">{item.nombre}</td><td className="p-2 border"><select value={item.status} onChange={e => updateAttendance(item.cadeteId, e.target.value)} className="border rounded p-1"><option value="present">Presente</option><option value="absent">Ausente</option></select></td></tr>))}</tbody></table></div>
-                                {cadetesCurso.length === 0 && <p className="text-center text-gray-500 mt-4">No hay cadetes en este curso.</p>}
                             </div>
                         )}
                         
-                        {/* PESTAÑA REPORTE DE ASISTENCIA GENERAL POR AÑO/SECCIÓN */}
+                        {/* PESTAÑA REPORTE ASISTENCIA */}
                         {activeTab === 'reporteAsistencia' && (
                             <div className="bg-white rounded-xl shadow-md p-5">
-                                <h2 className="text-xl font-bold mb-4"><i className="fas fa-chart-line"></i> Reporte de Asistencia por Curso</h2>
-                                <p className="mb-3 text-sm">Fecha seleccionada: <strong>{asistenciaDate}</strong> (puedes cambiar arriba)</p>
+                                <h2 className="text-xl font-bold mb-4">Reporte de Asistencia por Curso</h2>
+                                <p className="mb-3">Fecha: <strong>{asistenciaDate}</strong></p>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {[1,2,3].map(year => (
                                         <div key={year} className="border rounded-lg p-3"><h3 className="font-bold text-lg">{year}° Año</h3>
@@ -405,37 +623,29 @@
                                         </div>
                                     ))}
                                 </div>
-                                <p className="text-xs text-gray-400 mt-4">*Para ver detalles diarios, usa la pestaña "Cargar Asistencia" y cambia la fecha.</p>
                             </div>
                         )}
                         
-                        {/* PESTAÑA ESTADÍSTICAS (igual que antes) */}
+                        {/* PESTAÑA ESTADÍSTICAS */}
                         {activeTab === 'estadisticas' && (
                             <div className="grid md:grid-cols-2 gap-6">
                                 <div className="bg-white rounded-xl shadow-md p-5"><h2 className="text-xl font-bold mb-4">Reporte de Cantidad</h2><div className="flex justify-around mb-6"><div className="text-center p-3 bg-green-50 rounded-lg"><div className="text-3xl font-bold text-green-700">{activos}</div><div>Activos</div></div><div className="text-center p-3 bg-red-50 rounded-lg"><div className="text-3xl font-bold text-red-700">{inactivos}</div><div>Inactivos</div></div><div className="text-center p-3 bg-blue-50 rounded-lg"><div className="text-3xl font-bold text-blue-700">{total}</div><div>Total</div></div></div><h3 className="font-semibold">Cadetes dados de baja</h3><div className="max-h-96 overflow-auto border rounded-lg"><table className="min-w-full text-sm"><thead className="bg-gray-100"><tr><th>Nombre</th><th>Profesión</th><th>Motivo</th><th>Año/Sección</th></tr></thead><tbody>{bajas.map((b,idx)=><tr key={idx}><td className="p-2">{b.nombre}</td><td>{b.profesion}</td><td className="text-red-600 text-xs">{b.motivo}</td><td>{b.año}°{b.seccion}</td></tr>)}</tbody></table></div></div>
                                 <div className="bg-white rounded-xl shadow-md p-5"><h2 className="text-xl font-bold mb-4">Resumen profesional y estudios</h2><p><strong>Profesiones:</strong> {[...new Set(cadetes.map(c=>c.profession))].slice(0,5).join(", ")}</p><p><strong>Oficios:</strong> {[...new Set(cadetes.flatMap(c=>c.trades))].slice(0,6).join(", ")}</p><p><strong>Estudios:</strong> {[...new Set(cadetes.map(c=>c.studies))].join(" | ")}</p><hr className="my-4"/><h3 className="font-semibold">Carpetas médicas activas</h3><p>{cadetes.filter(c=>c.medical.active).length} / {total}</p><div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{width: `${(cadetes.filter(c=>c.medical.active).length/total)*100}%`}}></div></div></div>
                             </div>
                         )}
+                        
+                        {/* PESTAÑA VISITAS EXTERNAS */}
+                        {activeTab === 'visitas' && (
+                            <div className="bg-white rounded-xl shadow-md p-5">
+                                <VisitasManager visitas={visitas} onAdd={addVisita} onRegistrarSalida={registrarSalidaVisita} onDelete={deleteVisita} />
+                            </div>
+                        )}
                     </div>
                     
-                    <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editingCadete ? "Editar Cadete" : "Nuevo Cadete"}>
-                        <CadeteForm cadete={editingCadete} onSave={(cad) => { editingCadete ? updateCadete(cad) : addCadete(cad); }} onCancel={() => setShowModal(false)} />
+                    {/* Modal para cadete */}
+                    <Modal isOpen={showCadeteModal} onClose={() => setShowCadeteModal(false)} title={editingCadete ? "Editar Cadete" : "Nuevo Cadete"}>
+                        <CadeteForm cadete={editingCadete} onSave={(cad) => { editingCadete ? updateCadete(cad) : addCadete(cad); }} onCancel={() => setShowCadeteModal(false)} />
                     </Modal>
-                </div>
-            );
-        };
-        
-        // Componente de detalle de cadete (con opción de editar)
-        const CadeteDetailPage = ({ cadete, onEdit }) => {
-            return (
-                <div className="space-y-5">
-                    <div className="flex justify-between items-start"><div className="flex items-center gap-4"><img src={cadete.photoUrl} className="w-20 h-20 rounded-full border-2 border-blue-500 object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/2.jpg'} /><div><h2 className="text-2xl font-bold">{cadete.firstName} {cadete.lastName}</h2><p>DNI: {cadete.dni} | {cadete.year}° {cadete.section} | {cadete.status === 'active' ? '✅ Activo' : `❌ Inactivo - ${cadete.inactivityReason}`}</p></div></div><button onClick={onEdit} className="bg-blue-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-edit"></i> Editar</button></div>
-                    <div className="grid md:grid-cols-2 gap-3"><div className="bg-gray-50 p-2 rounded"><i className="fas fa-map-marker-alt"></i> {cadete.address}</div><div><i className="fas fa-birthday-cake"></i> {cadete.birthDate}</div><div><i className="fas fa-briefcase"></i> {cadete.profession}</div><div><i className="fas fa-graduation-cap"></i> {cadete.studies}</div><div><i className="fas fa-tools"></i> {cadete.trades.join(", ")}</div><div><i className="fas fa-heartbeat"></i> Carpeta médica: {cadete.medical.active ? 'Activa' : 'Inactiva'}</div></div>
-                    <div><h3 className="font-bold">Parentesco</h3>{cadete.family.map((f,i)=><div key={i} className="bg-indigo-50 inline-block m-1 px-2 py-1 rounded">{f.relation}: {f.name} ({f.phone})</div>)}</div>
-                    {cadete.medical.familyDeath.hasDeath && <div className="bg-red-50 p-2 rounded"><i className="fas fa-heart-broken"></i> {cadete.medical.familyDeath.details}</div>}
-                    <div><h3 className="font-bold">Historial médico</h3><div className="max-h-32 overflow-auto border p-2">{cadete.medical.history.map((h,i)=><div key={i} className="text-sm">{h.date}: {h.description}</div>)}</div></div>
-                    <div><h3 className="font-bold">Notas</h3><table className="w-full text-sm"><thead className="bg-gray-100"><tr><th>Materia</th><th>Nota</th></tr></thead><tbody>{cadete.grades.map(g=><tr key={g.subject}><td>{g.subject}</td><td>{g.grade}</td></tr>)}</tbody></table></div>
-                    <div><h3 className="font-bold">Asistencia reciente</h3><div className="flex flex-wrap gap-1">{cadete.attendanceRecords.slice(0,10).map(a=><span key={a.date} className={`px-2 py-1 rounded text-xs ${a.status==='present'?'bg-green-200':'bg-red-200'}`}>{a.date}: {a.status==='present'?'✔️':'❌'}</span>)}</div></div>
                 </div>
             );
         };

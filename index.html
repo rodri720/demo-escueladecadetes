@@ -32,7 +32,7 @@
         const STORAGE_CADETES = 'escuela_cadetes_data';
         const STORAGE_VISITAS = 'escuela_visitas_data';
         
-        // ---------- DATOS DE EJEMPLO PARA CADETES (igual que antes, pero aseguramos algunos con carpeta inactiva) ----------
+        // ---------- DATOS DE EJEMPLO PARA CADETES ----------
         const generarCadetesEjemplo = () => {
             const nombres = ["Luciano", "Camila", "Santiago", "Valentina", "Mateo", "Renata", "Joaquín", "Agustina", "Tomás", "Lara", "Facundo", "Delfina"];
             const apellidos = ["Gutiérrez", "Fernández", "López", "Martínez", "Rodríguez", "Pérez", "Gómez", "Sánchez", "Romero", "Díaz", "Álvarez", "Molina"];
@@ -179,7 +179,7 @@
             );
         };
         
-        // Formulario de cadete (igual que antes, resumido por brevedad, pero completo)
+        // Formulario de cadete
         const CadeteForm = ({ cadete, onSave, onCancel }) => {
             const [formData, setFormData] = useState(cadete || {
                 firstName: '', lastName: '', dni: '', address: '', birthDate: '', year: 1, section: 'A',
@@ -330,7 +330,7 @@
                                 <tbody>
                                     {visitasHistoricas.map(v => (
                                         <tr key={v.id} className="border-b">
-                                            <td className="p-2">{v.dni}</td><td>{v.nombre}</td><td>{v.tipo}</td><td>{v.ingreso}</td><td>{v.salida}</td><td className="max-w-xs">{v.motivo}</td>
+                                            <td className="p-2">{v.dni}</td><td className="p-2">{v.nombre}</td><td className="p-2">{v.tipo}</td><td className="p-2">{v.ingreso}</td><td className="p-2">{v.salida}</td><td className="max-w-xs">{v.motivo}</td>
                                             <td><button onClick={() => onDelete(v.id)} className="text-red-500"><i className="fas fa-trash"></i></button></td>
                                         </tr>
                                     ))}
@@ -361,14 +361,9 @@
         // Componente de Alertas del Día
         const AlertasPanel = ({ cadetes, visitas }) => {
             const hoyStr = hoy();
-            // Cadetes con carpeta médica inactiva
             const carpetasInactivas = cadetes.filter(c => !c.medical.active);
-            // Bajas recientes (últimos 7 días) - Simulamos que los inactivos tienen fecha de baja aproximada (usamos inactivityReason para saber)
-            // Como no tenemos fecha de baja exacta, consideraremos que los que están inactivos son "recientes" para demo. En un sistema real se guardaría fecha.
             const bajasRecientes = cadetes.filter(c => c.status === 'inactive');
-            // Visitas activas de hoy
             const visitasActivasHoy = visitas.filter(v => !v.salida && v.ingreso.startsWith(hoyStr));
-            // Eventos: por ejemplo, cumpleaños de cadetes (opcional)
             const cumpleanosHoy = cadetes.filter(c => c.birthDate.slice(5) === hoyStr.slice(5));
             
             return (
@@ -416,12 +411,10 @@
             const [searchTerm, setSearchTerm] = useState('');
             const [filtroYear, setFiltroYear] = useState('todos');
             const [filtroSeccion, setFiltroSeccion] = useState('todos');
-            // Asistencias
             const [asistenciaYear, setAsistenciaYear] = useState(1);
             const [asistenciaSection, setAsistenciaSection] = useState('A');
             const [asistenciaDate, setAsistenciaDate] = useState(hoy());
             
-            // Persistencia
             useEffect(() => {
                 cadetesData = cadetes;
                 saveCadetes();
@@ -467,7 +460,6 @@
                 }
             };
             
-            // Filtros para cadetes
             const filteredCadetes = cadetes.filter(c => {
                 const matchSearch = `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(searchTerm.toLowerCase());
                 const matchYear = filtroYear === 'todos' || c.year === parseInt(filtroYear);
@@ -475,13 +467,11 @@
                 return matchSearch && matchYear && matchSection;
             });
             
-            // Estadísticas
             const total = cadetes.length;
             const activos = cadetes.filter(c => c.status === 'active').length;
             const inactivos = cadetes.filter(c => c.status === 'inactive').length;
             const bajas = cadetes.filter(c => c.status === 'inactive').map(c => ({ nombre: `${c.firstName} ${c.lastName}`, profesion: c.profession, motivo: c.inactivityReason, año: c.year, seccion: c.section }));
             
-            // Asistencias por curso
             const cadetesCurso = cadetes.filter(c => c.year === asistenciaYear && c.section === asistenciaSection);
             const getAsistenciaForDate = () => cadetesCurso.map(cadete => {
                 const record = cadete.attendanceRecords.find(r => r.date === asistenciaDate);
@@ -526,8 +516,17 @@
                 <div className="min-h-screen bg-gray-100">
                     <header className="bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-lg">
                         <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
-                            <div className="flex items-center gap-3"><i className="fas fa-shield-alt text-3xl"></i><h1 className="text-2xl font-bold">Escuela de Cadetes - Córdoba</h1></div>
-                            <div className="flex gap-2 mt-2 md:mt-0"><span className="bg-yellow-500 text-blue-900 px-3 py-1 rounded-full text-sm"><i className="fas fa-users"></i> Total: {total}</span><span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">Activos: {activos}</span><span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm">Inactivos: {inactivos}</span></div>
+                            <div className="flex items-center gap-3">
+                                {/* === LOGO AGREGADO AQUÍ === */}
+                                <img src="assets/logo-escuela.png" alt="Logo Escuela de Cadetes" className="h-12 w-auto" />
+                                <i className="fas fa-shield-alt text-3xl"></i>
+                                <h1 className="text-2xl font-bold">Escuela de Cadetes - Córdoba</h1>
+                            </div>
+                            <div className="flex gap-2 mt-2 md:mt-0">
+                                <span className="bg-yellow-500 text-blue-900 px-3 py-1 rounded-full text-sm"><i className="fas fa-users"></i> Total: {total}</span>
+                                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">Activos: {activos}</span>
+                                <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm">Inactivos: {inactivos}</span>
+                            </div>
                         </div>
                     </header>
                     
@@ -543,7 +542,7 @@
                     </div>
                     
                     <div className="container mx-auto px-4 py-6">
-                        {/* DASHBOARD CON ALERTAS */}
+                        {/* DASHBOARD */}
                         {activeTab === 'dashboard' && (
                             <div>
                                 <AlertasPanel cadetes={cadetes} visitas={visitas} />
@@ -569,7 +568,7 @@
                             </div>
                         )}
                         
-                        {/* PESTAÑA CADETES (igual que antes) */}
+                        {/* PESTAÑA CADETES */}
                         {activeTab === 'cadetes' && (
                             <div className="flex flex-col lg:flex-row gap-6">
                                 <div className="lg:w-1/2 xl:w-2/5 bg-white rounded-xl shadow-md p-4">
@@ -642,7 +641,6 @@
                         )}
                     </div>
                     
-                    {/* Modal para cadete */}
                     <Modal isOpen={showCadeteModal} onClose={() => setShowCadeteModal(false)} title={editingCadete ? "Editar Cadete" : "Nuevo Cadete"}>
                         <CadeteForm cadete={editingCadete} onSave={(cad) => { editingCadete ? updateCadete(cad) : addCadete(cad); }} onCancel={() => setShowCadeteModal(false)} />
                     </Modal>

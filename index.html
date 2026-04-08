@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Escuela de Cadetes - Sistema Integral de Gestión</title>
+    <title>Escuela de Cadetes - Gestión Integral</title>
     <!-- Tailwind CSS + FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -13,642 +13,504 @@
     <!-- Babel para JSX -->
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <style>
-        body { background: #f0f2f5; font-family: 'Segoe UI', Roboto, system-ui; }
-        .badge { @apply px-2 py-1 rounded-full text-xs font-semibold; }
-        .tab-active { border-bottom: 3px solid #2563eb; color: #1e3a8a; font-weight: 600; }
-        ::-webkit-scrollbar { width: 6px; }
+        body { background: #f1f5f9; font-family: 'Segoe UI', system-ui, 'Inter', sans-serif; }
+        .nav-card-btn {
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .nav-card-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+        }
+        .alert-sidebar {
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.02);
+        }
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
-        .alert-card { transition: all 0.2s; }
-        .alert-card:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
 
-    <script type="text/babel">
-        // ---------- STORAGE KEYS ----------
-        const STORAGE_CADETES = 'escuela_cadetes_data';
-        const STORAGE_VISITAS = 'escuela_visitas_data';
-        
-        // ---------- DATOS DE EJEMPLO PARA CADETES ----------
-        const generarCadetesEjemplo = () => {
-            const nombres = ["Luciano", "Camila", "Santiago", "Valentina", "Mateo", "Renata", "Joaquín", "Agustina", "Tomás", "Lara", "Facundo", "Delfina"];
-            const apellidos = ["Gutiérrez", "Fernández", "López", "Martínez", "Rodríguez", "Pérez", "Gómez", "Sánchez", "Romero", "Díaz", "Álvarez", "Molina"];
-            const profesiones = ["Estudiante", "Técnico en Seguridad", "Bombero Voluntario", "Auxiliar Administrativo", "Electricista", "Mecánico", "Enfermero", "Socorrista"];
-            const estudios = ["Secundario completo", "Terciario en curso", "Universitario incompleto", "Oficio técnico", "Bachiller", "Perito mercantil"];
-            const oficiosPosibles = ["Carpintería", "Herrería", "Electricidad domiciliaria", "Reparación de PC", "Cocina", "Primeros Auxilios", "Conducción de emergencias"];
-            const secciones = ['A', 'B', 'C'];
-            const años = [1,2,3];
-            const cadetes = [];
-            let idCounter = 1;
-            for (let i = 0; i < 18; i++) {
-                const año = años[Math.floor(Math.random() * años.length)];
-                const seccion = secciones[Math.floor(Math.random() * 3)];
-                const activo = Math.random() > 0.2;
-                let motivoInactivo = null;
-                if (!activo) {
-                    const motivos = ["Expulsión disciplinaria", "Baja médica", "Deserción", "Fallecimiento familiar (ausencia prolongada)", "Traslado a otra institución"];
-                    motivoInactivo = motivos[Math.floor(Math.random() * motivos.length)];
-                }
-                const tieneFallecimientoFamiliar = Math.random() > 0.7;
-                const historialMedico = [
-                    { date: "2025-01-15", description: "Consulta por traumatismo leve" },
-                    { date: "2024-11-02", description: "Vacuna antitetánica" },
-                    { date: "2024-08-20", description: "Control odontológico" }
-                ];
-                if (tieneFallecimientoFamiliar) {
-                    historialMedico.push({ date: "2025-02-10", description: "Acompañamiento psicológico por fallecimiento de familiar directo" });
-                }
-                const materias = ["Defensa Personal", "Derecho Penal", "Acondicionamiento Físico", "Ética Policial", "Primeros Auxilios", "Tiro"];
-                const grades = materias.map(m => ({ subject: m, grade: Math.floor(Math.random() * (100 - 60 + 1) + 60), date: "2025-03-20" }));
-                const attendanceRecords = [];
-                const startDate = new Date(2025, 2, 1);
-                for (let d = 0; d < 15; d++) {
-                    const date = new Date(startDate);
-                    date.setDate(startDate.getDate() + d);
-                    const status = Math.random() > 0.15 ? 'present' : 'absent';
-                    attendanceRecords.push({ date: date.toISOString().split('T')[0], status });
-                }
-                const parentesco = [
-                    { relation: "Padre", name: `Carlos ${apellidos[i % apellidos.length]}`, phone: "351-1234567" },
-                    { relation: "Madre", name: `María ${apellidos[(i+1) % apellidos.length]}`, phone: "351-7654321" }
-                ];
-                if (Math.random() > 0.6) parentesco.push({ relation: "Tutor", name: "Roberto Fernández", phone: "351-9988776" });
-                
-                // Forzar algunos con carpeta médica inactiva para mostrar alertas
-                const medicalActive = (i % 5 === 0) ? false : (Math.random() > 0.2);
-                
-                cadetes.push({
-                    id: idCounter++,
-                    firstName: nombres[i % nombres.length],
-                    lastName: apellidos[i % apellidos.length],
-                    dni: `${Math.floor(40000000 + Math.random() * 10000000)}`,
-                    address: `Calle ${Math.floor(1+Math.random()*2000)} N° ${Math.floor(100+Math.random()*900)} - Córdoba Capital`,
-                    birthDate: `199${Math.floor(5+Math.random()*4)}-${Math.floor(1+Math.random()*12)}-${Math.floor(1+Math.random()*28)}`,
-                    photoUrl: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 70)}.jpg`,
-                    year: año,
-                    section: seccion,
-                    status: activo ? 'active' : 'inactive',
-                    inactivityReason: motivoInactivo,
-                    profession: profesiones[Math.floor(Math.random() * profesiones.length)],
-                    studies: estudios[Math.floor(Math.random() * estudios.length)],
-                    trades: [oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)], oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)]].slice(0,2),
-                    family: parentesco,
-                    medical: {
-                        active: medicalActive,
-                        history: historialMedico,
-                        allergies: Math.random() > 0.8 ? "Penicilina, polen" : "Ninguna conocida",
-                        conditions: Math.random() > 0.7 ? "Asma leve" : "Sin patologías",
-                        familyDeath: { hasDeath: tieneFallecimientoFamiliar, details: tieneFallecimientoFamiliar ? "Fallecimiento del padre en accidente (Enero 2025)" : null }
-                    },
-                    grades: grades,
-                    attendanceRecords: attendanceRecords
-                });
+<script type="text/babel">
+    // ---------- STORAGE KEYS ----------
+    const STORAGE_CADETES = 'escuela_cadetes_v4';
+    const STORAGE_SALIDAS = 'escuela_salidas_momentaneas_v4';
+    const STORAGE_EXTERNOS = 'escuela_externos_v4';   // Personas ajenas
+
+    // ---------- GENERAR DATOS DE EJEMPLO (SIN ASISTENCIAS) ----------
+    const generarCadetesEjemplo = () => {
+        const nombres = ["Luciano", "Camila", "Santiago", "Valentina", "Mateo", "Renata", "Joaquín", "Agustina", "Tomás", "Lara", "Facundo", "Delfina"];
+        const apellidos = ["Gutiérrez", "Fernández", "López", "Martínez", "Rodríguez", "Pérez", "Gómez", "Sánchez", "Romero", "Díaz", "Álvarez", "Molina"];
+        const profesiones = ["Estudiante", "Técnico en Seguridad", "Bombero Voluntario", "Auxiliar Administrativo", "Electricista", "Mecánico", "Enfermero"];
+        const estudios = ["Secundario completo", "Terciario en curso", "Universitario incompleto", "Oficio técnico"];
+        const oficiosPosibles = ["Carpintería", "Herrería", "Electricidad", "Reparación de PC", "Cocina", "Primeros Auxilios"];
+        const secciones = ['A', 'B', 'C'];
+        const años = [1,2,3];
+        const cadetes = [];
+        let idCounter = 1;
+        for (let i = 0; i < 16; i++) {
+            const año = años[Math.floor(Math.random() * años.length)];
+            const seccion = secciones[Math.floor(Math.random() * 3)];
+            const activo = Math.random() > 0.25;
+            let motivoInactivo = null;
+            if (!activo) {
+                const motivos = ["Expulsión disciplinaria", "Baja médica", "Deserción", "Traslado a otra institución"];
+                motivoInactivo = motivos[Math.floor(Math.random() * motivos.length)];
             }
-            return cadetes;
-        };
-        
-        // Inicializar cadetes
-        let cadetesData = [];
-        const loadCadetes = () => {
-            const stored = localStorage.getItem(STORAGE_CADETES);
-            if (stored) {
-                cadetesData = JSON.parse(stored);
-            } else {
-                cadetesData = generarCadetesEjemplo();
-                localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
+            const tieneFallecimientoFamiliar = Math.random() > 0.7;
+            const historialMedico = [
+                { date: "2025-01-15", description: "Consulta por traumatismo leve" },
+                { date: "2024-11-02", description: "Vacuna antitetánica" }
+            ];
+            if (tieneFallecimientoFamiliar) {
+                historialMedico.push({ date: "2025-02-10", description: "Acompañamiento psicológico por fallecimiento de familiar directo" });
             }
-        };
-        loadCadetes();
-        
-        const saveCadetes = () => {
+            const materias = ["Defensa Personal", "Derecho Penal", "Acondicionamiento Físico", "Ética Policial"];
+            const grades = materias.map(m => ({ subject: m, grade: Math.floor(Math.random() * (100 - 60 + 1) + 60), date: "2025-03-20" }));
+            const parentesco = [
+                { relation: "Padre", name: `Carlos ${apellidos[i % apellidos.length]}`, phone: "351-1234567" },
+                { relation: "Madre", name: `María ${apellidos[(i+1) % apellidos.length]}`, phone: "351-7654321" }
+            ];
+            if (Math.random() > 0.6) parentesco.push({ relation: "Tutor", name: "Roberto Fernández", phone: "351-9988776" });
+            const medicalActive = (i % 5 === 0) ? false : (Math.random() > 0.2);
+            
+            cadetes.push({
+                id: idCounter++,
+                firstName: nombres[i % nombres.length],
+                lastName: apellidos[i % apellidos.length],
+                dni: `${Math.floor(40000000 + Math.random() * 10000000)}`,
+                address: `Calle ${Math.floor(1+Math.random()*2000)} N° ${Math.floor(100+Math.random()*900)} - Córdoba Capital`,
+                birthDate: `199${Math.floor(5+Math.random()*4)}-${Math.floor(1+Math.random()*12)}-${Math.floor(1+Math.random()*28)}`,
+                photoUrl: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 70)}.jpg`,
+                year: año,
+                section: seccion,
+                status: activo ? 'active' : 'inactive',
+                inactivityReason: motivoInactivo,
+                profession: profesiones[Math.floor(Math.random() * profesiones.length)],
+                studies: estudios[Math.floor(Math.random() * estudios.length)],
+                trades: [oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)], oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)]].slice(0,2),
+                family: parentesco,
+                medical: {
+                    active: medicalActive,
+                    history: historialMedico,
+                    allergies: Math.random() > 0.8 ? "Penicilina, polen" : "Ninguna conocida",
+                    conditions: Math.random() > 0.7 ? "Asma leve" : "Sin patologías",
+                    familyDeath: { hasDeath: tieneFallecimientoFamiliar, details: tieneFallecimientoFamiliar ? "Fallecimiento del padre en accidente (Enero 2025)" : null },
+                    attachments: [] 
+                },
+                grades: grades,
+                retiros: []   // retiros permanentes (archivo + motivo)
+            });
+        }
+        return cadetes;
+    };
+
+    // Cargar cadetes
+    let cadetesData = [];
+    const loadCadetes = () => {
+        const stored = localStorage.getItem(STORAGE_CADETES);
+        if (stored) {
+            cadetesData = JSON.parse(stored);
+            cadetesData = cadetesData.map(c => ({ ...c, medical: { ...c.medical, attachments: c.medical.attachments || [] }, retiros: c.retiros || [] }));
+        } else {
+            cadetesData = generarCadetesEjemplo();
             localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
-        };
+        }
+    };
+    loadCadetes();
+    const saveCadetes = () => localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
+
+    // Salidas Momentáneas (ausencias temporales)
+    let salidasData = [];
+    const loadSalidas = () => {
+        const stored = localStorage.getItem(STORAGE_SALIDAS);
+        if (stored) salidasData = JSON.parse(stored);
+        else {
+            salidasData = [
+                { id: 1, tipo: "Cadete", nombre: "Luciano Gutiérrez", dni: "40123456", causa: "Trámite personal", salida: "2026-04-08T09:00", retorno: null, archivo: null },
+                { id: 2, tipo: "Personal", nombre: "Prof. Martínez", dni: "27876543", causa: "Capacitación externa", salida: "2026-04-08T10:30", retorno: "2026-04-08T12:30", archivo: null }
+            ];
+            localStorage.setItem(STORAGE_SALIDAS, JSON.stringify(salidasData));
+        }
+    };
+    loadSalidas();
+    const saveSalidas = () => localStorage.setItem(STORAGE_SALIDAS, JSON.stringify(salidasData));
+
+    // Personas Ajenas al Establecimiento (externos)
+    let externosData = [];
+    const loadExternos = () => {
+        const stored = localStorage.getItem(STORAGE_EXTERNOS);
+        if (stored) externosData = JSON.parse(stored);
+        else {
+            externosData = [
+                { id: 101, nombre: "Roberto Carrizo", dni: "33456789", institucion: "Servicios Técnicos", motivo: "Mantenimiento eléctrico", ingreso: "2026-04-08T08:00", salida: null },
+                { id: 102, nombre: "Lucía Pereyra", dni: "40123567", institucion: "Consultora Externa", motivo: "Auditoría", ingreso: "2026-04-08T11:20", salida: null }
+            ];
+            localStorage.setItem(STORAGE_EXTERNOS, JSON.stringify(externosData));
+        }
+    };
+    loadExternos();
+    const saveExternos = () => localStorage.setItem(STORAGE_EXTERNOS, JSON.stringify(externosData));
+
+    // Funciones auxiliares
+    const hoy = () => new Date().toISOString().split('T')[0];
+    Date.prototype.toHoursMinutes = function() { return `${this.getHours().toString().padStart(2,'0')}:${this.getMinutes().toString().padStart(2,'0')}`; };
+
+    const { useState, useEffect } = React;
+
+    // ---------- COMPONENTES REUTILIZABLES ----------
+    const Modal = ({ isOpen, onClose, title, children }) => {
+        if (!isOpen) return null;
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={onClose}>
+                <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
+                    <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
+                        <h2 className="text-xl font-bold">{title}</h2>
+                        <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><i className="fas fa-times text-xl"></i></button>
+                    </div>
+                    <div className="p-5">{children}</div>
+                </div>
+            </div>
+        );
+    };
+
+    // Formulario de cadete (completo, con médica, retiros, etc.)
+    const CadeteForm = ({ cadete, onSave, onCancel }) => {
+        const [formData, setFormData] = useState(cadete || {
+            firstName: '', lastName: '', dni: '', address: '', birthDate: '', year: 1, section: 'A',
+            status: 'active', inactivityReason: '', profession: '', studies: '', trades: [],
+            family: [{ relation: 'Padre', name: '', phone: '' }, { relation: 'Madre', name: '', phone: '' }],
+            medical: { active: true, history: [], allergies: '', conditions: '', familyDeath: { hasDeath: false, details: '' }, attachments: [] },
+            grades: [], photoUrl: '', retiros: []
+        });
+        const [photoPreview, setPhotoPreview] = useState(formData.photoUrl || '');
         
-        // Inicializar visitas
-        let visitasData = [];
-        const loadVisitas = () => {
-            const stored = localStorage.getItem(STORAGE_VISITAS);
-            if (stored) {
-                visitasData = JSON.parse(stored);
-            } else {
-                // Visitas de ejemplo
-                visitasData = [
-                    { id: 1, dni: "30123456", nombre: "Juan Pérez", tipo: "Proveedor", ingreso: "2025-04-07 09:30", salida: null, motivo: "Entrega de uniformes" },
-                    { id: 2, dni: "27876543", nombre: "María Gómez", tipo: "Visita familiar", ingreso: "2025-04-07 10:15", salida: "2025-04-07 11:45", motivo: "Ver a cadete López" },
-                    { id: 3, dni: "33456789", nombre: "Carlos Ruiz", tipo: "Mantenimiento", ingreso: "2025-04-07 08:00", salida: null, motivo: "Reparación de aires acondicionados" }
-                ];
-                localStorage.setItem(STORAGE_VISITAS, JSON.stringify(visitasData));
+        const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const handleFamilyChange = (idx, field, value) => {
+            const newFamily = [...formData.family];
+            newFamily[idx][field] = value;
+            setFormData(prev => ({ ...prev, family: newFamily }));
+        };
+        const handleMedicalChange = (field, value) => setFormData(prev => ({ ...prev, medical: { ...prev.medical, [field]: value } }));
+        const handlePhotoUpload = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => { setPhotoPreview(reader.result); setFormData(prev => ({ ...prev, photoUrl: reader.result })); };
+                reader.readAsDataURL(file);
             }
         };
-        loadVisitas();
-        
-        const saveVisitas = () => {
-            localStorage.setItem(STORAGE_VISITAS, JSON.stringify(visitasData));
-        };
-        
-        // Funciones auxiliares
-        const hoy = () => new Date().toISOString().split('T')[0];
-        const ahora = () => {
-            const d = new Date();
-            return `${d.toISOString().split('T')[0]} ${d.toHoursMinutes()}`;
-        };
-        // Para formato hora
-        Date.prototype.toHoursMinutes = function() {
-            return `${this.getHours().toString().padStart(2,'0')}:${this.getMinutes().toString().padStart(2,'0')}`;
-        };
-        
-        // ---------- COMPONENTES ----------
-        const { useState, useEffect } = React;
-        
-        // Modal genérico
-        const Modal = ({ isOpen, onClose, title, children }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={onClose}>
-                    <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
-                        <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
-                            <h2 className="text-xl font-bold">{title}</h2>
-                            <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><i className="fas fa-times text-xl"></i></button>
-                        </div>
-                        <div className="p-5">{children}</div>
-                    </div>
-                </div>
-            );
-        };
-        
-        // Formulario de cadete
-        const CadeteForm = ({ cadete, onSave, onCancel }) => {
-            const [formData, setFormData] = useState(cadete || {
-                firstName: '', lastName: '', dni: '', address: '', birthDate: '', year: 1, section: 'A',
-                status: 'active', inactivityReason: '', profession: '', studies: '', trades: [],
-                family: [{ relation: 'Padre', name: '', phone: '' }, { relation: 'Madre', name: '', phone: '' }],
-                medical: { active: true, history: [], allergies: '', conditions: '', familyDeath: { hasDeath: false, details: '' } },
-                grades: [], attendanceRecords: []
-            });
-            
-            const handleChange = (e) => {
-                const { name, value } = e.target;
-                setFormData(prev => ({ ...prev, [name]: value }));
-            };
-            
-            const handleFamilyChange = (idx, field, value) => {
-                const newFamily = [...formData.family];
-                newFamily[idx][field] = value;
-                setFormData(prev => ({ ...prev, family: newFamily }));
-            };
-            
-            const handleMedicalChange = (field, value) => {
-                setFormData(prev => ({ ...prev, medical: { ...prev.medical, [field]: value } }));
-            };
-            
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (!formData.firstName || !formData.lastName || !formData.dni) {
-                    alert("Complete nombre, apellido y DNI");
-                    return;
-                }
-                const newCadete = { ...formData, id: cadete ? cadete.id : Date.now(), photoUrl: cadete?.photoUrl || `https://randomuser.me/api/portraits/lego/${Math.floor(Math.random()*10)}.jpg` };
-                onSave(newCadete);
-            };
-            
-            return (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <input name="firstName" placeholder="Nombre" value={formData.firstName} onChange={handleChange} className="border p-2 rounded" required />
-                        <input name="lastName" placeholder="Apellido" value={formData.lastName} onChange={handleChange} className="border p-2 rounded" required />
-                        <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleChange} className="border p-2 rounded" required />
-                        <input name="address" placeholder="Dirección" value={formData.address} onChange={handleChange} className="border p-2 rounded" />
-                        <input name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} className="border p-2 rounded" />
-                        <select name="year" value={formData.year} onChange={handleChange} className="border p-2 rounded"><option value={1}>1° Año</option><option value={2}>2° Año</option><option value={3}>3° Año</option></select>
-                        <select name="section" value={formData.section} onChange={handleChange} className="border p-2 rounded"><option>A</option><option>B</option><option>C</option></select>
-                        <select name="status" value={formData.status} onChange={handleChange} className="border p-2 rounded"><option value="active">Activo</option><option value="inactive">Inactivo</option></select>
-                        {formData.status === 'inactive' && <input name="inactivityReason" placeholder="Motivo de inactividad" value={formData.inactivityReason} onChange={handleChange} className="border p-2 rounded" />}
-                        <input name="profession" placeholder="Profesión" value={formData.profession} onChange={handleChange} className="border p-2 rounded" />
-                        <input name="studies" placeholder="Estudios" value={formData.studies} onChange={handleChange} className="border p-2 rounded" />
-                        <input name="trades" placeholder="Oficios (separar con coma)" value={formData.trades.join(',')} onChange={e => setFormData(prev => ({ ...prev, trades: e.target.value.split(',').map(s=>s.trim()) }))} className="border p-2 rounded" />
-                    </div>
-                    <div><label className="font-semibold">Parentesco</label>
-                        {formData.family.map((fam, idx) => (
-                            <div key={idx} className="flex gap-2 mt-1">
-                                <input value={fam.relation} placeholder="Relación" onChange={e => handleFamilyChange(idx, 'relation', e.target.value)} className="border p-1 rounded w-1/4" />
-                                <input value={fam.name} placeholder="Nombre" onChange={e => handleFamilyChange(idx, 'name', e.target.value)} className="border p-1 rounded w-2/4" />
-                                <input value={fam.phone} placeholder="Teléfono" onChange={e => handleFamilyChange(idx, 'phone', e.target.value)} className="border p-1 rounded w-1/4" />
-                            </div>
-                        ))}
-                    </div>
-                    <div><label className="font-semibold">Carpeta Médica</label>
-                        <div className="flex gap-2"><label><input type="checkbox" checked={formData.medical.active} onChange={e => handleMedicalChange('active', e.target.checked)} /> Activa</label></div>
-                        <input placeholder="Alergias" value={formData.medical.allergies} onChange={e => handleMedicalChange('allergies', e.target.value)} className="border p-1 rounded w-full mt-1" />
-                        <input placeholder="Patologías" value={formData.medical.conditions} onChange={e => handleMedicalChange('conditions', e.target.value)} className="border p-1 rounded w-full mt-1" />
-                        <label><input type="checkbox" checked={formData.medical.familyDeath.hasDeath} onChange={e => handleMedicalChange('familyDeath', { hasDeath: e.target.checked, details: formData.medical.familyDeath.details })} /> Fallecimiento familiar</label>
-                        {formData.medical.familyDeath.hasDeath && <input placeholder="Detalles" value={formData.medical.familyDeath.details} onChange={e => handleMedicalChange('familyDeath', { hasDeath: true, details: e.target.value })} className="border p-1 rounded w-full mt-1" />}
-                    </div>
-                    <div className="flex justify-end gap-2 pt-3">
-                        <button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-300 rounded">Cancelar</button>
-                        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Guardar</button>
-                    </div>
-                </form>
-            );
-        };
-        
-        // Componente de detalle de cadete
-        const CadeteDetailPage = ({ cadete, onEdit }) => {
-            return (
-                <div className="space-y-5">
-                    <div className="flex justify-between items-start"><div className="flex items-center gap-4"><img src={cadete.photoUrl} className="w-20 h-20 rounded-full border-2 border-blue-500 object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/2.jpg'} /><div><h2 className="text-2xl font-bold">{cadete.firstName} {cadete.lastName}</h2><p>DNI: {cadete.dni} | {cadete.year}° {cadete.section} | {cadete.status === 'active' ? '✅ Activo' : `❌ Inactivo - ${cadete.inactivityReason}`}</p></div></div><button onClick={onEdit} className="bg-blue-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-edit"></i> Editar</button></div>
-                    <div className="grid md:grid-cols-2 gap-3"><div className="bg-gray-50 p-2 rounded"><i className="fas fa-map-marker-alt"></i> {cadete.address}</div><div><i className="fas fa-birthday-cake"></i> {cadete.birthDate}</div><div><i className="fas fa-briefcase"></i> {cadete.profession}</div><div><i className="fas fa-graduation-cap"></i> {cadete.studies}</div><div><i className="fas fa-tools"></i> {cadete.trades.join(", ")}</div><div><i className="fas fa-heartbeat"></i> Carpeta médica: {cadete.medical.active ? 'Activa' : 'Inactiva'}</div></div>
-                    <div><h3 className="font-bold">Parentesco</h3>{cadete.family.map((f,i)=><div key={i} className="bg-indigo-50 inline-block m-1 px-2 py-1 rounded">{f.relation}: {f.name} ({f.phone})</div>)}</div>
-                    {cadete.medical.familyDeath.hasDeath && <div className="bg-red-50 p-2 rounded"><i className="fas fa-heart-broken"></i> {cadete.medical.familyDeath.details}</div>}
-                    <div><h3 className="font-bold">Historial médico</h3><div className="max-h-32 overflow-auto border p-2">{cadete.medical.history.map((h,i)=><div key={i} className="text-sm">{h.date}: {h.description}</div>)}</div></div>
-                    <div><h3 className="font-bold">Notas</h3><table className="w-full text-sm"><thead className="bg-gray-100"><tr><th>Materia</th><th>Nota</th></tr></thead><tbody>{cadete.grades.map(g=><tr key={g.subject}><td>{g.subject}</td><td>{g.grade}</td></tr>)}</tbody></table></div>
-                    <div><h3 className="font-bold">Asistencia reciente</h3><div className="flex flex-wrap gap-1">{cadete.attendanceRecords.slice(0,10).map(a=><span key={a.date} className={`px-2 py-1 rounded text-xs ${a.status==='present'?'bg-green-200':'bg-red-200'}`}>{a.date}: {a.status==='present'?'✔️':'❌'}</span>)}</div></div>
-                </div>
-            );
-        };
-        
-        // Componente de registro de visitas externas
-        const VisitasManager = ({ visitas, onAdd, onRegistrarSalida, onDelete }) => {
-            const [showForm, setShowForm] = useState(false);
-            const [nuevaVisita, setNuevaVisita] = useState({ dni: '', nombre: '', tipo: 'Proveedor', motivo: '', ingreso: '', salida: null });
-            
-            const handleInputChange = (e) => {
-                setNuevaVisita({ ...nuevaVisita, [e.target.name]: e.target.value });
-            };
-            
-            const handleSubmit = (e) => {
-                e.preventDefault();
-                if (!nuevaVisita.dni || !nuevaVisita.nombre || !nuevaVisita.motivo) {
-                    alert("Complete DNI, nombre y motivo");
-                    return;
-                }
-                const now = new Date();
-                const ingresoStr = `${now.toISOString().split('T')[0]} ${now.toHoursMinutes()}`;
-                onAdd({ ...nuevaVisita, id: Date.now(), ingreso: ingresoStr, salida: null });
-                setNuevaVisita({ dni: '', nombre: '', tipo: 'Proveedor', motivo: '', ingreso: '', salida: null });
-                setShowForm(false);
-            };
-            
-            const visitasActivas = visitas.filter(v => !v.salida);
-            const visitasHistoricas = visitas.filter(v => v.salida);
-            
-            return (
-                <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-xl font-bold"><i className="fas fa-door-open"></i> Registro de Visitas Externas</h2>
-                        <button onClick={() => setShowForm(true)} className="bg-blue-600 text-white px-4 py-2 rounded-md"><i className="fas fa-plus"></i> Nueva Visita</button>
-                    </div>
-                    
-                    {/* Visitas Activas (sin salida) */}
-                    <div className="border rounded-lg p-4 bg-yellow-50">
-                        <h3 className="font-bold text-lg mb-2"><i className="fas fa-clock"></i> Visitas Activas (sin registrar salida)</h3>
-                        {visitasActivas.length === 0 ? <p className="text-gray-500">No hay visitas activas.</p> : (
-                            <div className="space-y-2">
-                                {visitasActivas.map(v => (
-                                    <div key={v.id} className="bg-white p-3 rounded shadow flex justify-between items-center flex-wrap">
-                                        <div><strong>{v.nombre}</strong> (DNI: {v.dni}) - {v.tipo}<br/><span className="text-xs">Ingreso: {v.ingreso} - Motivo: {v.motivo}</span></div>
-                                        <div className="flex gap-2 mt-2 sm:mt-0">
-                                            <button onClick={() => onRegistrarSalida(v.id)} className="bg-green-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-sign-out-alt"></i> Registrar Salida</button>
-                                            <button onClick={() => onDelete(v.id)} className="bg-red-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-trash"></i></button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                    
-                    {/* Historial de visitas */}
-                    <div className="border rounded-lg p-4">
-                        <h3 className="font-bold text-lg mb-2"><i className="fas fa-history"></i> Historial de Visitas</h3>
-                        <div className="max-h-96 overflow-auto">
-                            <table className="min-w-full text-sm border">
-                                <thead className="bg-gray-100 sticky top-0">
-                                    <tr><th className="p-2">DNI</th><th>Nombre</th><th>Tipo</th><th>Ingreso</th><th>Salida</th><th>Motivo</th><th></th></tr>
-                                </thead>
-                                <tbody>
-                                    {visitasHistoricas.map(v => (
-                                        <tr key={v.id} className="border-b">
-                                            <td className="p-2">{v.dni}</td><td className="p-2">{v.nombre}</td><td className="p-2">{v.tipo}</td><td className="p-2">{v.ingreso}</td><td className="p-2">{v.salida}</td><td className="max-w-xs">{v.motivo}</td>
-                                            <td><button onClick={() => onDelete(v.id)} className="text-red-500"><i className="fas fa-trash"></i></button></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    {/* Modal para nueva visita */}
-                    <Modal isOpen={showForm} onClose={() => setShowForm(false)} title="Registrar Ingreso de Visita">
-                        <form onSubmit={handleSubmit} className="space-y-3">
-                            <input name="dni" placeholder="DNI" value={nuevaVisita.dni} onChange={handleInputChange} className="border p-2 rounded w-full" required />
-                            <input name="nombre" placeholder="Nombre completo" value={nuevaVisita.nombre} onChange={handleInputChange} className="border p-2 rounded w-full" required />
-                            <select name="tipo" value={nuevaVisita.tipo} onChange={handleInputChange} className="border p-2 rounded w-full">
-                                <option>Proveedor</option><option>Visita familiar</option><option>Mantenimiento</option><option>Personal externo</option><option>Otro</option>
-                            </select>
-                            <input name="motivo" placeholder="Motivo de la visita" value={nuevaVisita.motivo} onChange={handleInputChange} className="border p-2 rounded w-full" required />
-                            <div className="flex justify-end gap-2 pt-2">
-                                <button type="button" onClick={() => setShowForm(false)} className="px-4 py-2 bg-gray-300 rounded">Cancelar</button>
-                                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Registrar Ingreso</button>
-                            </div>
-                        </form>
-                    </Modal>
-                </div>
-            );
-        };
-        
-        // Componente de Alertas del Día
-        const AlertasPanel = ({ cadetes, visitas }) => {
-            const hoyStr = hoy();
-            const carpetasInactivas = cadetes.filter(c => !c.medical.active);
-            const bajasRecientes = cadetes.filter(c => c.status === 'inactive');
-            const visitasActivasHoy = visitas.filter(v => !v.salida && v.ingreso.startsWith(hoyStr));
-            const cumpleanosHoy = cadetes.filter(c => c.birthDate.slice(5) === hoyStr.slice(5));
-            
-            return (
-                <div className="bg-white rounded-xl shadow-md p-5 mb-6">
-                    <h2 className="text-2xl font-bold mb-4 flex items-center gap-2"><i className="fas fa-bell text-yellow-500"></i> Alertas del Día</h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded alert-card">
-                            <h3 className="font-bold text-red-700"><i className="fas fa-notes-medical"></i> Carpetas Médicas Inactivas</h3>
-                            {carpetasInactivas.length === 0 ? <p className="text-sm">✅ Todas las carpetas están activas.</p> : (
-                                <ul className="list-disc pl-5 text-sm">{carpetasInactivas.map(c => <li key={c.id}>{c.firstName} {c.lastName} (DNI: {c.dni})</li>)}</ul>
-                            )}
-                        </div>
-                        <div className="bg-orange-50 border-l-4 border-orange-500 p-3 rounded alert-card">
-                            <h3 className="font-bold text-orange-700"><i className="fas fa-user-slash"></i> Bajas Recientes</h3>
-                            {bajasRecientes.length === 0 ? <p className="text-sm">No hay bajas recientes.</p> : (
-                                <ul className="list-disc pl-5 text-sm">{bajasRecientes.map(c => <li key={c.id}>{c.firstName} {c.lastName} - Motivo: {c.inactivityReason || "No especificado"}</li>)}</ul>
-                            )}
-                        </div>
-                        <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded alert-card">
-                            <h3 className="font-bold text-blue-700"><i className="fas fa-door-open"></i> Visitas Activas Hoy</h3>
-                            {visitasActivasHoy.length === 0 ? <p className="text-sm">No hay visitas activas en este momento.</p> : (
-                                <ul className="list-disc pl-5 text-sm">{visitasActivasHoy.map(v => <li key={v.id}>{v.nombre} ({v.tipo}) - Ingreso: {v.ingreso.split(' ')[1]}</li>)}</ul>
-                            )}
-                        </div>
-                        {cumpleanosHoy.length > 0 && (
-                            <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded alert-card">
-                                <h3 className="font-bold text-green-700"><i className="fas fa-birthday-cake"></i> Cumpleaños</h3>
-                                <ul className="list-disc pl-5 text-sm">{cumpleanosHoy.map(c => <li key={c.id}>{c.firstName} {c.lastName}</li>)}</ul>
-                            </div>
-                        )}
-                    </div>
-                    <p className="text-xs text-gray-400 mt-3">* Actualizado automáticamente. Las alertas incluyen estado de carpetas médicas, bajas y visitas pendientes de salida.</p>
-                </div>
-            );
-        };
-        
-        // Componente principal App
-        const App = () => {
-            const [cadetes, setCadetes] = useState(cadetesData);
-            const [visitas, setVisitas] = useState(visitasData);
-            const [activeTab, setActiveTab] = useState('dashboard');
-            const [selectedCadete, setSelectedCadete] = useState(null);
-            const [showCadeteModal, setShowCadeteModal] = useState(false);
-            const [editingCadete, setEditingCadete] = useState(null);
-            const [searchTerm, setSearchTerm] = useState('');
-            const [filtroYear, setFiltroYear] = useState('todos');
-            const [filtroSeccion, setFiltroSeccion] = useState('todos');
-            const [asistenciaYear, setAsistenciaYear] = useState(1);
-            const [asistenciaSection, setAsistenciaSection] = useState('A');
-            const [asistenciaDate, setAsistenciaDate] = useState(hoy());
-            
-            useEffect(() => {
-                cadetesData = cadetes;
-                saveCadetes();
-            }, [cadetes]);
-            
-            useEffect(() => {
-                visitasData = visitas;
-                saveVisitas();
-            }, [visitas]);
-            
-            const updateCadete = (updated) => {
-                setCadetes(prev => prev.map(c => c.id === updated.id ? updated : c));
-                if (selectedCadete?.id === updated.id) setSelectedCadete(updated);
-                setShowCadeteModal(false);
-                setEditingCadete(null);
-            };
-            
-            const addCadete = (newCadete) => {
-                setCadetes(prev => [...prev, newCadete]);
-                setShowCadeteModal(false);
-            };
-            
-            const deleteCadete = (id) => {
-                if (confirm("¿Eliminar cadete?")) {
-                    setCadetes(prev => prev.filter(c => c.id !== id));
-                    if (selectedCadete?.id === id) setSelectedCadete(null);
-                }
-            };
-            
-            const addVisita = (visita) => {
-                setVisitas(prev => [...prev, visita]);
-            };
-            
-            const registrarSalidaVisita = (id) => {
-                const now = new Date();
-                const salidaStr = `${now.toISOString().split('T')[0]} ${now.toHoursMinutes()}`;
-                setVisitas(prev => prev.map(v => v.id === id ? { ...v, salida: salidaStr } : v));
-            };
-            
-            const deleteVisita = (id) => {
-                if (confirm("Eliminar registro de visita?")) {
-                    setVisitas(prev => prev.filter(v => v.id !== id));
-                }
-            };
-            
-            const filteredCadetes = cadetes.filter(c => {
-                const matchSearch = `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(searchTerm.toLowerCase());
-                const matchYear = filtroYear === 'todos' || c.year === parseInt(filtroYear);
-                const matchSection = filtroSeccion === 'todos' || c.section === filtroSeccion;
-                return matchSearch && matchYear && matchSection;
-            });
-            
-            const total = cadetes.length;
-            const activos = cadetes.filter(c => c.status === 'active').length;
-            const inactivos = cadetes.filter(c => c.status === 'inactive').length;
-            const bajas = cadetes.filter(c => c.status === 'inactive').map(c => ({ nombre: `${c.firstName} ${c.lastName}`, profesion: c.profession, motivo: c.inactivityReason, año: c.year, seccion: c.section }));
-            
-            const cadetesCurso = cadetes.filter(c => c.year === asistenciaYear && c.section === asistenciaSection);
-            const getAsistenciaForDate = () => cadetesCurso.map(cadete => {
-                const record = cadete.attendanceRecords.find(r => r.date === asistenciaDate);
-                return { cadeteId: cadete.id, nombre: `${cadete.firstName} ${cadete.lastName}`, status: record ? record.status : 'present' };
-            });
-            const [asistenciaList, setAsistenciaList] = useState(() => getAsistenciaForDate());
-            useEffect(() => {
-                setAsistenciaList(getAsistenciaForDate());
-            }, [asistenciaYear, asistenciaSection, asistenciaDate, cadetes]);
-            
-            const updateAttendance = (cadeteId, newStatus) => {
-                setCadetes(prev => prev.map(cad => {
-                    if (cad.id === cadeteId) {
-                        const existing = cad.attendanceRecords.find(r => r.date === asistenciaDate);
-                        let newRecords;
-                        if (existing) {
-                            newRecords = cad.attendanceRecords.map(r => r.date === asistenciaDate ? { ...r, status: newStatus } : r);
-                        } else {
-                            newRecords = [...cad.attendanceRecords, { date: asistenciaDate, status: newStatus }];
-                        }
-                        return { ...cad, attendanceRecords: newRecords };
+        const handleAttachmentsUpload = (e) => {
+            const files = Array.from(e.target.files);
+            const newFiles = [];
+            files.forEach(file => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    newFiles.push({ name: file.name, data: reader.result, type: file.type });
+                    if (newFiles.length === files.length) {
+                        setFormData(prev => ({ ...prev, medical: { ...prev.medical, attachments: [...prev.medical.attachments, ...newFiles] } }));
                     }
-                    return cad;
-                }));
-                setAsistenciaList(prev => prev.map(item => item.cadeteId === cadeteId ? { ...item, status: newStatus } : item));
-            };
-            
-            const asistenciaGeneralPorCurso = () => {
-                const res = {};
-                for (let year of [1,2,3]) {
-                    for (let sec of ['A','B','C']) {
-                        const cadCurso = cadetes.filter(c => c.year === year && c.section === sec);
-                        const totalPresentes = cadCurso.filter(c => c.attendanceRecords.some(r => r.date === asistenciaDate && r.status === 'present')).length;
-                        res[`${year}${sec}`] = { total: cadCurso.length, presentes: totalPresentes };
-                    }
-                }
-                return res;
-            };
-            const asistenciaStats = asistenciaGeneralPorCurso();
-            
-            return (
-                <div className="min-h-screen bg-gray-100">
-                    <header className="bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-lg">
-                        <div className="container mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center">
-                            <div className="flex items-center gap-3">
-                                {/* === LOGO AGREGADO AQUÍ === */}
-                                <img src="assets/logo-escuela.png" alt="Logo Escuela de Cadetes" className="h-12 w-auto" />
-                                <i className="fas fa-shield-alt text-3xl"></i>
-                                <h1 className="text-2xl font-bold">Escuela de Cadetes - Córdoba</h1>
-                            </div>
-                            <div className="flex gap-2 mt-2 md:mt-0">
-                                <span className="bg-yellow-500 text-blue-900 px-3 py-1 rounded-full text-sm"><i className="fas fa-users"></i> Total: {total}</span>
-                                <span className="bg-green-500 text-white px-3 py-1 rounded-full text-sm">Activos: {activos}</span>
-                                <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm">Inactivos: {inactivos}</span>
-                            </div>
-                        </div>
-                    </header>
-                    
-                    <div className="bg-white border-b shadow-sm">
-                        <div className="container mx-auto px-4 flex flex-wrap gap-2">
-                            <button onClick={() => setActiveTab('dashboard')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'dashboard' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-tachometer-alt"></i> Dashboard</button>
-                            <button onClick={() => { setActiveTab('cadetes'); setSelectedCadete(null); }} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'cadetes' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-id-card"></i> Cadetes</button>
-                            <button onClick={() => setActiveTab('asistenciaDiaria')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'asistenciaDiaria' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-calendar-check"></i> Cargar Asistencia</button>
-                            <button onClick={() => setActiveTab('reporteAsistencia')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'reporteAsistencia' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-chart-line"></i> Reporte Asistencia</button>
-                            <button onClick={() => setActiveTab('estadisticas')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'estadisticas' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-chart-simple"></i> Estadísticas</button>
-                            <button onClick={() => setActiveTab('visitas')} className={`py-3 px-4 font-medium flex items-center gap-2 ${activeTab === 'visitas' ? 'tab-active' : 'text-gray-600'}`}><i className="fas fa-door-open"></i> Visitas Externas</button>
-                        </div>
-                    </div>
-                    
-                    <div className="container mx-auto px-4 py-6">
-                        {/* DASHBOARD */}
-                        {activeTab === 'dashboard' && (
-                            <div>
-                                <AlertasPanel cadetes={cadetes} visitas={visitas} />
-                                <div className="grid md:grid-cols-2 gap-6 mt-4">
-                                    <div className="bg-white rounded-xl shadow-md p-5">
-                                        <h2 className="text-xl font-bold mb-3">Resumen Rápido</h2>
-                                        <p><i className="fas fa-graduation-cap"></i> Total cadetes: {total}</p>
-                                        <p><i className="fas fa-check-circle text-green-600"></i> Activos: {activos}</p>
-                                        <p><i className="fas fa-user-slash text-red-600"></i> Inactivos: {inactivos}</p>
-                                        <p><i className="fas fa-door-open"></i> Visitas activas hoy: {visitas.filter(v => !v.salida && v.ingreso.startsWith(hoy())).length}</p>
-                                        <hr className="my-3"/>
-                                        <button onClick={() => setActiveTab('visitas')} className="text-blue-600">Ir a gestionar visitas →</button>
-                                    </div>
-                                    <div className="bg-white rounded-xl shadow-md p-5">
-                                        <h2 className="text-xl font-bold mb-3">Acciones Rápidas</h2>
-                                        <div className="flex flex-col gap-2">
-                                            <button onClick={() => { setEditingCadete(null); setShowCadeteModal(true); }} className="bg-blue-600 text-white p-2 rounded"><i className="fas fa-user-plus"></i> Nuevo Cadete</button>
-                                            <button onClick={() => setActiveTab('asistenciaDiaria')} className="bg-green-600 text-white p-2 rounded"><i className="fas fa-calendar-check"></i> Cargar Asistencia Hoy</button>
-                                            <button onClick={() => setActiveTab('visitas')} className="bg-purple-600 text-white p-2 rounded"><i className="fas fa-door-open"></i> Registrar Visita Externa</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* PESTAÑA CADETES */}
-                        {activeTab === 'cadetes' && (
-                            <div className="flex flex-col lg:flex-row gap-6">
-                                <div className="lg:w-1/2 xl:w-2/5 bg-white rounded-xl shadow-md p-4">
-                                    <div className="flex flex-wrap gap-2 mb-4">
-                                        <input type="text" placeholder="Buscar por nombre o DNI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="border rounded-md px-3 py-2 flex-1 text-sm" />
-                                        <select value={filtroYear} onChange={e => setFiltroYear(e.target.value)} className="border rounded-md px-3 py-2 text-sm"><option value="todos">Todos los años</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select>
-                                        <select value={filtroSeccion} onChange={e => setFiltroSeccion(e.target.value)} className="border rounded-md px-3 py-2 text-sm"><option value="todos">Todas</option><option>A</option><option>B</option><option>C</option></select>
-                                        <button onClick={() => { setEditingCadete(null); setShowCadeteModal(true); }} className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm"><i className="fas fa-plus"></i> Nuevo</button>
-                                    </div>
-                                    <div className="max-h-[70vh] overflow-y-auto space-y-2">
-                                        {filteredCadetes.map(cadete => (
-                                            <div key={cadete.id} onClick={() => setSelectedCadete(cadete)} className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 border ${selectedCadete?.id === cadete.id ? 'bg-blue-50 border-blue-400' : 'hover:bg-gray-50 border-gray-200'}`}>
-                                                <img src={cadete.photoUrl} className="w-12 h-12 rounded-full object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/1.jpg'} />
-                                                <div className="flex-1"><div className="font-bold">{cadete.firstName} {cadete.lastName}</div><div className="text-xs text-gray-500">DNI: {cadete.dni} | {cadete.year}°{cadete.section}</div><div className={`badge text-xs ${cadete.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{cadete.status === 'active' ? 'Activo' : 'Inactivo'}</div></div>
-                                                <div className="flex gap-2"><button onClick={(e) => { e.stopPropagation(); setEditingCadete(cadete); setShowCadeteModal(true); }} className="text-blue-500"><i className="fas fa-edit"></i></button><button onClick={(e) => { e.stopPropagation(); deleteCadete(cadete.id); }} className="text-red-500"><i className="fas fa-trash"></i></button></div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                                <div className="lg:w-1/2 xl:w-3/5 bg-white rounded-xl shadow-md p-5 overflow-y-auto max-h-[80vh]">
-                                    {selectedCadete ? <CadeteDetailPage cadete={selectedCadete} onEdit={() => { setEditingCadete(selectedCadete); setShowCadeteModal(true); }} /> : <div className="flex flex-col items-center justify-center h-64 text-gray-400"><i className="fas fa-user-graduate text-6xl mb-3"></i><p>Selecciona un cadete</p></div>}
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* PESTAÑA ASISTENCIA DIARIA */}
-                        {activeTab === 'asistenciaDiaria' && (
-                            <div className="bg-white rounded-xl shadow-md p-5">
-                                <h2 className="text-xl font-bold mb-4">Cargar Asistencia Diaria por Curso</h2>
-                                <div className="flex flex-wrap gap-4 mb-5">
-                                    <div><label className="block text-sm">Año</label><select value={asistenciaYear} onChange={e => setAsistenciaYear(parseInt(e.target.value))} className="border rounded p-2"><option value={1}>1° Año</option><option value={2}>2° Año</option><option value={3}>3° Año</option></select></div>
-                                    <div><label className="block text-sm">Sección</label><select value={asistenciaSection} onChange={e => setAsistenciaSection(e.target.value)} className="border rounded p-2"><option>A</option><option>B</option><option>C</option></select></div>
-                                    <div><label className="block text-sm">Fecha</label><input type="date" value={asistenciaDate} onChange={e => setAsistenciaDate(e.target.value)} className="border rounded p-2" /></div>
-                                </div>
-                                <div className="overflow-x-auto"><table className="min-w-full border"><thead className="bg-gray-100"><tr><th className="p-2 border">Cadete</th><th className="p-2 border">Asistencia</th></tr></thead><tbody>{asistenciaList.map(item => (<tr key={item.cadeteId}><td className="p-2 border">{item.nombre}</td><td className="p-2 border"><select value={item.status} onChange={e => updateAttendance(item.cadeteId, e.target.value)} className="border rounded p-1"><option value="present">Presente</option><option value="absent">Ausente</option></select></td></tr>))}</tbody></table></div>
-                            </div>
-                        )}
-                        
-                        {/* PESTAÑA REPORTE ASISTENCIA */}
-                        {activeTab === 'reporteAsistencia' && (
-                            <div className="bg-white rounded-xl shadow-md p-5">
-                                <h2 className="text-xl font-bold mb-4">Reporte de Asistencia por Curso</h2>
-                                <p className="mb-3">Fecha: <strong>{asistenciaDate}</strong></p>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {[1,2,3].map(year => (
-                                        <div key={year} className="border rounded-lg p-3"><h3 className="font-bold text-lg">{year}° Año</h3>
-                                            {['A','B','C'].map(sec => {
-                                                const stat = asistenciaStats[`${year}${sec}`] || { total: 0, presentes: 0 };
-                                                return (<div key={sec} className="flex justify-between items-center mt-2"><span>Sección {sec}:</span><span>{stat.presentes}/{stat.total} presentes</span><div className="w-24 bg-gray-200 rounded-full h-2"><div className="bg-green-600 h-2 rounded-full" style={{width: `${stat.total ? (stat.presentes/stat.total)*100 : 0}%`}}></div></div></div>);
-                                            })}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* PESTAÑA ESTADÍSTICAS */}
-                        {activeTab === 'estadisticas' && (
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="bg-white rounded-xl shadow-md p-5"><h2 className="text-xl font-bold mb-4">Reporte de Cantidad</h2><div className="flex justify-around mb-6"><div className="text-center p-3 bg-green-50 rounded-lg"><div className="text-3xl font-bold text-green-700">{activos}</div><div>Activos</div></div><div className="text-center p-3 bg-red-50 rounded-lg"><div className="text-3xl font-bold text-red-700">{inactivos}</div><div>Inactivos</div></div><div className="text-center p-3 bg-blue-50 rounded-lg"><div className="text-3xl font-bold text-blue-700">{total}</div><div>Total</div></div></div><h3 className="font-semibold">Cadetes dados de baja</h3><div className="max-h-96 overflow-auto border rounded-lg"><table className="min-w-full text-sm"><thead className="bg-gray-100"><tr><th>Nombre</th><th>Profesión</th><th>Motivo</th><th>Año/Sección</th></tr></thead><tbody>{bajas.map((b,idx)=><tr key={idx}><td className="p-2">{b.nombre}</td><td>{b.profesion}</td><td className="text-red-600 text-xs">{b.motivo}</td><td>{b.año}°{b.seccion}</td></tr>)}</tbody></table></div></div>
-                                <div className="bg-white rounded-xl shadow-md p-5"><h2 className="text-xl font-bold mb-4">Resumen profesional y estudios</h2><p><strong>Profesiones:</strong> {[...new Set(cadetes.map(c=>c.profession))].slice(0,5).join(", ")}</p><p><strong>Oficios:</strong> {[...new Set(cadetes.flatMap(c=>c.trades))].slice(0,6).join(", ")}</p><p><strong>Estudios:</strong> {[...new Set(cadetes.map(c=>c.studies))].join(" | ")}</p><hr className="my-4"/><h3 className="font-semibold">Carpetas médicas activas</h3><p>{cadetes.filter(c=>c.medical.active).length} / {total}</p><div className="w-full bg-gray-200 rounded-full h-2"><div className="bg-blue-600 h-2 rounded-full" style={{width: `${(cadetes.filter(c=>c.medical.active).length/total)*100}%`}}></div></div></div>
-                            </div>
-                        )}
-                        
-                        {/* PESTAÑA VISITAS EXTERNAS */}
-                        {activeTab === 'visitas' && (
-                            <div className="bg-white rounded-xl shadow-md p-5">
-                                <VisitasManager visitas={visitas} onAdd={addVisita} onRegistrarSalida={registrarSalidaVisita} onDelete={deleteVisita} />
-                            </div>
-                        )}
-                    </div>
-                    
-                    <Modal isOpen={showCadeteModal} onClose={() => setShowCadeteModal(false)} title={editingCadete ? "Editar Cadete" : "Nuevo Cadete"}>
-                        <CadeteForm cadete={editingCadete} onSave={(cad) => { editingCadete ? updateCadete(cad) : addCadete(cad); }} onCancel={() => setShowCadeteModal(false)} />
-                    </Modal>
-                </div>
-            );
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+        const removeAttachment = (index) => {
+            const newAtts = [...formData.medical.attachments];
+            newAtts.splice(index, 1);
+            setFormData(prev => ({ ...prev, medical: { ...prev.medical, attachments: newAtts } }));
         };
         
-        ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-    </script>
+        const handleSubmit = (e) => {
+            e.preventDefault();
+            if (!formData.firstName || !formData.lastName || !formData.dni) return alert("Complete nombre, apellido y DNI");
+            const finalPhoto = formData.photoUrl || `https://randomuser.me/api/portraits/lego/${Math.floor(Math.random()*10)}.jpg`;
+            const newCadete = { ...formData, id: cadete ? cadete.id : Date.now(), photoUrl: finalPhoto, retiros: cadete?.retiros || [] };
+            onSave(newCadete);
+        };
+        
+        return (
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input name="firstName" placeholder="Nombre" value={formData.firstName} onChange={handleChange} className="border p-2 rounded" required />
+                    <input name="lastName" placeholder="Apellido" value={formData.lastName} onChange={handleChange} className="border p-2 rounded" required />
+                    <input name="dni" placeholder="DNI" value={formData.dni} onChange={handleChange} className="border p-2 rounded" required />
+                    <input name="address" placeholder="Dirección" value={formData.address} onChange={handleChange} className="border p-2 rounded" />
+                    <input name="birthDate" type="date" value={formData.birthDate} onChange={handleChange} className="border p-2 rounded" />
+                    <select name="year" value={formData.year} onChange={handleChange} className="border p-2 rounded"><option value={1}>1° Año</option><option value={2}>2° Año</option><option value={3}>3° Año</option></select>
+                    <select name="section" value={formData.section} onChange={handleChange} className="border p-2 rounded"><option>A</option><option>B</option><option>C</option></select>
+                    <select name="status" value={formData.status} onChange={handleChange} className="border p-2 rounded"><option value="active">Activo</option><option value="inactive">Inactivo</option></select>
+                    {formData.status === 'inactive' && <input name="inactivityReason" placeholder="Motivo de inactividad" value={formData.inactivityReason} onChange={handleChange} className="border p-2 rounded" />}
+                    <input name="profession" placeholder="Profesión" value={formData.profession} onChange={handleChange} className="border p-2 rounded" />
+                    <input name="studies" placeholder="Estudios" value={formData.studies} onChange={handleChange} className="border p-2 rounded" />
+                    <input name="trades" placeholder="Oficios (separar con coma)" value={formData.trades.join(',')} onChange={e => setFormData(prev => ({ ...prev, trades: e.target.value.split(',').map(s=>s.trim()) }))} className="border p-2 rounded" />
+                </div>
+                <div><label className="font-semibold">Foto</label><input type="file" accept="image/*" onChange={handlePhotoUpload} className="border p-1 rounded w-full" />{photoPreview && <img src={photoPreview} className="h-20 w-20 object-cover rounded-full mt-2" />}</div>
+                <div><label className="font-semibold">Parentesco</label>{formData.family.map((fam, idx) => (<div key={idx} className="flex gap-2 mt-1"><input value={fam.relation} onChange={e => handleFamilyChange(idx, 'relation', e.target.value)} className="border p-1 rounded w-1/4" /><input value={fam.name} onChange={e => handleFamilyChange(idx, 'name', e.target.value)} className="border p-1 rounded w-2/4" /><input value={fam.phone} onChange={e => handleFamilyChange(idx, 'phone', e.target.value)} className="border p-1 rounded w-1/4" /></div>))}</div>
+                <div><label className="font-semibold">Carpeta Médica</label>
+                    <div><label><input type="checkbox" checked={formData.medical.active} onChange={e => handleMedicalChange('active', e.target.checked)} /> Activa</label></div>
+                    <input placeholder="Alergias" value={formData.medical.allergies} onChange={e => handleMedicalChange('allergies', e.target.value)} className="border p-1 rounded w-full mt-1" />
+                    <input placeholder="Patologías" value={formData.medical.conditions} onChange={e => handleMedicalChange('conditions', e.target.value)} className="border p-1 rounded w-full mt-1" />
+                    <label><input type="checkbox" checked={formData.medical.familyDeath.hasDeath} onChange={e => handleMedicalChange('familyDeath', { hasDeath: e.target.checked, details: formData.medical.familyDeath.details })} /> Fallecimiento familiar</label>
+                    {formData.medical.familyDeath.hasDeath && <input placeholder="Detalles" value={formData.medical.familyDeath.details} onChange={e => handleMedicalChange('familyDeath', { hasDeath: true, details: e.target.value })} className="border p-1 rounded w-full mt-1" />}
+                    <div className="mt-2"><label className="font-medium">Adjuntos médicos</label><input type="file" multiple onChange={handleAttachmentsUpload} className="border p-1 rounded w-full" />
+                        {formData.medical.attachments.length > 0 && (<ul className="list-disc pl-5 mt-1 text-sm">{formData.medical.attachments.map((att, idx) => (<li key={idx} className="flex justify-between"><a href={att.data} download={att.name} className="text-blue-600 underline">{att.name}</a><button type="button" onClick={() => removeAttachment(idx)} className="text-red-500"><i className="fas fa-trash"></i></button></li>))}</ul>)}
+                    </div>
+                </div>
+                <div className="flex justify-end gap-2 pt-3"><button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-300 rounded">Cancelar</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Guardar</button></div>
+            </form>
+        );
+    };
+
+    // Modal para registrar retiro (con archivo)
+    const RegistrarRetiroModal = ({ isOpen, onClose, cadete, onRegistrar }) => {
+        const [reason, setReason] = useState('');
+        const [date, setDate] = useState(hoy());
+        const [fileData, setFileData] = useState(null);
+        const handleFileChange = (e) => {
+            const f = e.target.files[0];
+            if (f) {
+                const reader = new FileReader();
+                reader.onloadend = () => setFileData({ name: f.name, data: reader.result, type: f.type });
+                reader.readAsDataURL(f);
+            }
+        };
+        const handleSubmit = () => {
+            if (!reason.trim()) return alert("Motivo requerido");
+            onRegistrar({ id: Date.now(), date: date, reason: reason, file: fileData || null });
+            setReason(''); setFileData(null); onClose();
+        };
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title={`Registrar Retiro - ${cadete?.firstName} ${cadete?.lastName}`}>
+                <div className="space-y-4">
+                    <div><label>Fecha</label><input type="date" value={date} onChange={e=>setDate(e.target.value)} className="border p-2 rounded w-full"/></div>
+                    <div><label>Motivo</label><textarea rows="3" value={reason} onChange={e=>setReason(e.target.value)} className="border p-2 rounded w-full" placeholder="Ej: Baja médica, Expulsión, etc."/></div>
+                    <div><label>Adjuntar documento</label><input type="file" onChange={handleFileChange} className="border p-1 rounded w-full"/></div>
+                    <div className="flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Cancelar</button><button onClick={handleSubmit} className="px-4 py-2 bg-indigo-600 text-white rounded">Guardar Retiro</button></div>
+                </div>
+            </Modal>
+        );
+    };
+
+    // Detalle de cadete (con retiros)
+    const CadeteDetailPage = ({ cadete, onEdit, onAddRetiro }) => {
+        const [showRetiroModal, setShowRetiroModal] = useState(false);
+        if (!cadete) return <div className="flex flex-col items-center justify-center h-64 text-gray-400"><i className="fas fa-user-graduate text-6xl mb-3"></i><p>Selecciona un cadete</p></div>;
+        return (
+            <div className="space-y-5">
+                <div className="flex justify-between flex-wrap gap-3"><div className="flex items-center gap-4"><img src={cadete.photoUrl} className="w-20 h-20 rounded-full border-2 border-blue-500 object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/2.jpg'} /><div><h2 className="text-2xl font-bold">{cadete.firstName} {cadete.lastName}</h2><p>DNI: {cadete.dni} | {cadete.year}° {cadete.section} | {cadete.status === 'active' ? '✅ Activo' : `❌ Inactivo`}</p></div></div><div className="flex gap-2"><button onClick={onEdit} className="bg-blue-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-edit"></i> Editar</button><button onClick={() => setShowRetiroModal(true)} className="bg-amber-600 text-white px-3 py-1 rounded text-sm"><i className="fas fa-file-upload"></i> Registrar Retiro</button></div></div>
+                <div className="grid md:grid-cols-2 gap-3"><div className="bg-gray-50 p-2 rounded"><i className="fas fa-map-marker-alt"></i> {cadete.address}</div><div><i className="fas fa-birthday-cake"></i> {cadete.birthDate}</div><div><i className="fas fa-briefcase"></i> {cadete.profession}</div><div><i className="fas fa-graduation-cap"></i> {cadete.studies}</div><div><i className="fas fa-tools"></i> {cadete.trades.join(", ")}</div><div><i className="fas fa-heartbeat"></i> Carpeta médica: {cadete.medical.active ? 'Activa' : 'Inactiva'}</div></div>
+                <div><h3 className="font-bold">Parentesco</h3>{cadete.family.map((f,i)=><div key={i} className="bg-indigo-50 inline-block m-1 px-2 py-1 rounded">{f.relation}: {f.name} ({f.phone})</div>)}</div>
+                {cadete.medical.familyDeath.hasDeath && <div className="bg-red-50 p-2 rounded"><i className="fas fa-heart-broken"></i> {cadete.medical.familyDeath.details}</div>}
+                <div><h3 className="font-bold">Historial médico</h3><div className="max-h-32 overflow-auto border p-2">{cadete.medical.history.map((h,i)=><div key={i} className="text-sm">{h.date}: {h.description}</div>)}</div></div>
+                {cadete.medical.attachments?.length > 0 && (<div><h3 className="font-bold">Documentos adjuntos médicos</h3><ul className="list-disc pl-5">{cadete.medical.attachments.map((att, idx) => <li key={idx}><a href={att.data} download={att.name} className="text-blue-600 underline">{att.name}</a></li>)}</ul></div>)}
+                <div><h3 className="font-bold text-lg border-b">Registro de Retiros / Novedades</h3>
+                    {cadete.retiros?.length === 0 ? <p className="text-gray-500">No hay retiros registrados.</p> : cadete.retiros.map(ret => (<div key={ret.id} className="bg-gray-50 border rounded p-3 mt-2"><div className="font-semibold">{ret.date}</div><p>{ret.reason}</p>{ret.file && <a href={ret.file.data} download={ret.file.name} className="text-blue-600 text-sm underline"><i className="fas fa-paperclip"></i> {ret.file.name}</a>}</div>))}
+                </div>
+                <div><h3 className="font-bold">Calificaciones</h3><table className="w-full text-sm"><thead className="bg-gray-100"><tr><th>Materia</th><th>Nota</th></tr></thead><tbody>{cadete.grades.map(g=><tr key={g.subject}><td>{g.subject}</td><td>{g.grade}</td></tr>)}</tbody></table></div>
+                <RegistrarRetiroModal isOpen={showRetiroModal} onClose={()=>setShowRetiroModal(false)} cadete={cadete} onRegistrar={(nuevo)=>{ onAddRetiro(cadete.id, nuevo); setShowRetiroModal(false); }} />
+            </div>
+        );
+    };
+
+    // ---------- MÓDULO: CARPETAS MÉDICAS ----------
+    const MedicalFoldersManager = ({ cadetes, onEditCadete }) => {
+        const [search, setSearch] = useState('');
+        const filtered = cadetes.filter(c => `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(search.toLowerCase()));
+        return (
+            <div className="bg-white rounded-xl shadow-md p-5">
+                <h2 className="text-2xl font-bold mb-4"><i className="fas fa-notes-medical text-blue-600"></i> Carpetas Médicas de Cadetes</h2>
+                <input type="text" placeholder="Buscar cadete..." value={search} onChange={e=>setSearch(e.target.value)} className="border p-2 rounded w-full mb-4" />
+                <div className="overflow-x-auto">
+                    <table className="min-w-full border text-sm">
+                        <thead className="bg-gray-100"><tr><th className="p-2">Foto</th><th>Nombre</th><th>DNI</th><th>Estado Médico</th><th>Alergias</th><th>Patologías</th><th>Adjuntos</th><th>Acción</th></tr></thead>
+                        <tbody>
+                            {filtered.map(c => (
+                                <tr key={c.id} className="border-b hover:bg-gray-50">
+                                    <td className="p-2"><img src={c.photoUrl} className="w-10 h-10 rounded-full object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/1.jpg'}/></td>
+                                    <td className="p-2 font-medium">{c.firstName} {c.lastName}</td>
+                                    <td>{c.dni}</td>
+                                    <td>{c.medical.active ? <span className="text-green-600">Activa</span> : <span className="text-red-600">Inactiva</span>}</td>
+                                    <td className="max-w-xs">{c.medical.allergies || "Ninguna"}</td>
+                                    <td>{c.medical.conditions || "Sin patologías"}</td>
+                                    <td>{c.medical.attachments?.length || 0} archivo(s)</td>
+                                    <td><button onClick={() => onEditCadete(c)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs"><i className="fas fa-eye"></i> Ver/Editar</button></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
+
+    // ---------- MÓDULO: SALIDAS MOMENTÁNEAS ----------
+    const SalidasMomentaneasManager = ({ salidas, onAdd, onRegistrarRetorno, onDelete }) => {
+        const [showForm, setShowForm] = useState(false);
+        const [nueva, setNueva] = useState({ tipo: 'Cadete', nombre: '', dni: '', causa: '', salida: '', retorno: null, archivo: null });
+        const [archivoData, setArchivoData] = useState(null);
+        
+        const handleChange = (e) => setNueva({ ...nueva, [e.target.name]: e.target.value });
+        const handleFile = (e) => {
+            const f = e.target.files[0];
+            if (f) {
+                const reader = new FileReader();
+                reader.onloadend = () => setArchivoData({ name: f.name, data: reader.result, type: f.type });
+                reader.readAsDataURL(f);
+            }
+        };
+        const submit = (e) => {
+            e.preventDefault();
+            if (!nueva.nombre || !nueva.dni || !nueva.causa || !nueva.salida) return alert("Complete nombre, DNI, causa y hora de salida");
+            onAdd({ id: Date.now(), ...nueva, salida: nueva.salida, retorno: null, archivo: archivoData || null });
+            setNueva({ tipo: 'Cadete', nombre: '', dni: '', causa: '', salida: '', retorno: null, archivo: null });
+            setArchivoData(null);
+            setShowForm(false);
+        };
+        
+        const activas = salidas.filter(s => !s.retorno);
+        const historicas = salidas.filter(s => s.retorno);
+        
+        return (
+            <div className="bg-white rounded-xl shadow-md p-5">
+                <div className="flex justify-between items-center mb-4"><h2 className="text-2xl font-bold"><i className="fas fa-clock"></i> Salidas Momentáneas (Ausencias)</h2><button onClick={()=>setShowForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-md"><i className="fas fa-plus"></i> Registrar Salida</button></div>
+                <div className="mb-6 border rounded-lg p-4 bg-amber-50"><h3 className="font-bold text-lg">Ausentes actualmente (sin retorno)</h3>{activas.length===0?<p className="text-gray-500">No hay salidas activas</p>:activas.map(s=>(
+                    <div key={s.id} className="bg-white p-3 rounded mb-2 flex justify-between flex-wrap items-center"><div><strong>{s.nombre}</strong> ({s.tipo}) - DNI: {s.dni}<br/><span className="text-xs">Salida: {new Date(s.salida).toLocaleString()} - Causa: {s.causa}</span>{s.archivo && <a href={s.archivo.data} download={s.archivo.name} className="ml-2 text-blue-500 text-xs underline"><i className="fas fa-paperclip"></i> {s.archivo.name}</a>}</div><button onClick={()=>onRegistrarRetorno(s.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm"><i className="fas fa-undo-alt"></i> Registrar Retorno</button></div>
+                ))}</div>
+                <div><h3 className="font-bold text-lg">Historial de salidas</h3><div className="max-h-96 overflow-auto"><table className="min-w-full text-sm border"><thead className="bg-gray-100"><tr><th>Nombre</th><th>Tipo</th><th>Salida</th><th>Retorno</th><th>Causa</th><th></th></tr></thead><tbody>{historicas.map(s=>(
+                    <tr key={s.id} className="border-b"><td className="p-2">{s.nombre}</td><td>{s.tipo}</td><td>{new Date(s.salida).toLocaleString()}</td><td>{s.retorno ? new Date(s.retorno).toLocaleString() : '-'}</td><td className="max-w-xs">{s.causa}</td><td><button onClick={()=>onDelete(s.id)} className="text-red-500"><i className="fas fa-trash"></i></button></td></tr>
+                ))}</tbody></table></div></div>
+                <Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Salida Momentánea">
+                    <form onSubmit={submit} className="space-y-3">
+                        <select name="tipo" value={nueva.tipo} onChange={handleChange} className="border p-2 rounded w-full"><option>Cadete</option><option>Personal</option><option>Docente</option></select>
+                        <input name="nombre" placeholder="Nombre completo" onChange={handleChange} required className="border p-2 rounded w-full"/>
+                        <input name="dni" placeholder="DNI / Legajo" onChange={handleChange} required className="border p-2 rounded w-full"/>
+                        <input name="causa" placeholder="Motivo de la salida" onChange={handleChange} required className="border p-2 rounded w-full"/>
+                        <label>Fecha y hora de salida</label><input name="salida" type="datetime-local" onChange={handleChange} required className="border p-2 rounded w-full"/>
+                        <label>Adjuntar documento (trámite, permiso)</label><input type="file" onChange={handleFile} className="border p-1 rounded w-full"/>
+                        <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowForm(false)} className="bg-gray-300 px-3 py-1 rounded">Cancelar</button><button type="submit" className="bg-indigo-600 text-white px-3 py-1 rounded">Registrar</button></div>
+                    </form>
+                </Modal>
+            </div>
+        );
+    };
+
+    // ---------- MÓDULO: PERSONAS AJENAS (RESTAURADO) ----------
+    const ExternosManager = ({ externos, onAdd, onRegistrarSalida, onDelete }) => {
+        const [showForm, setShowForm] = useState(false);
+        const [nuevo, setNuevo] = useState({ nombre: '', dni: '', institucion: '', motivo: '' });
+        const handleChange = (e) => setNuevo({ ...nuevo, [e.target.name]: e.target.value });
+        const submit = (e) => {
+            e.preventDefault();
+            if (!nuevo.nombre || !nuevo.dni) { alert("Complete nombre y DNI"); return; }
+            const now = new Date(); const ingreso = now.toISOString().slice(0,16);
+            onAdd({ id: Date.now(), ...nuevo, ingreso, salida: null });
+            setNuevo({ nombre: '', dni: '', institucion: '', motivo: '' }); setShowForm(false);
+        };
+        const activos = externos.filter(e => !e.salida);
+        const historicos = externos.filter(e => e.salida);
+        return (<div><div className="flex justify-between items-center mb-4"><h2 className="text-2xl font-bold"><i className="fas fa-user-friends"></i> Personas Ajenas al Establecimiento</h2><button onClick={()=>setShowForm(true)} className="bg-purple-600 text-white px-4 py-2 rounded-md"><i className="fas fa-plus"></i> Registrar Ingreso</button></div>
+        <div className="border rounded-lg p-4 bg-indigo-50 mb-5"><h3 className="font-bold">Actualmente dentro</h3>{activos.length===0?<p>No hay personal externo dentro</p>:activos.map(p=><div key={p.id} className="bg-white p-3 rounded mb-2 flex justify-between flex-wrap items-center"><div><strong>{p.nombre}</strong> (DNI: {p.dni}) - {p.institucion}<br/>{p.motivo} - Ingreso: {new Date(p.ingreso).toLocaleString()}</div><button onClick={()=>onRegistrarSalida(p.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm"><i className="fas fa-sign-out-alt"></i> Registrar Salida</button></div>)}</div>
+        <div><h3 className="font-bold">Historial</h3><div className="max-h-96 overflow-auto"><table className="min-w-full text-sm border"><thead className="bg-gray-100"><tr><th>Nombre</th><th>DNI</th><th>Institución</th><th>Ingreso</th><th>Salida</th><th>Motivo</th><th></th></tr></thead><tbody>{historicos.map(h=><tr key={h.id}><td>{h.nombre}</td><td>{h.dni}</td><td>{h.institucion}</td><td>{new Date(h.ingreso).toLocaleString()}</td><td>{h.salida ? new Date(h.salida).toLocaleString() : '-'}</td><td>{h.motivo}</td><td><button onClick={()=>onDelete(h.id)} className="text-red-500"><i className="fas fa-trash"></i></button></td></tr>)}</tbody></table></div></div>
+        <Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Persona Externa"><form onSubmit={submit} className="space-y-3"><input name="nombre" placeholder="Nombre completo" onChange={handleChange} required/><input name="dni" placeholder="DNI" required/><input name="institucion" placeholder="Empresa / Institución"/><input name="motivo" placeholder="Motivo de ingreso"/><div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowForm(false)} className="bg-gray-300 px-3 py-1 rounded">Cancelar</button><button type="submit" className="bg-purple-600 text-white px-3 py-1 rounded">Registrar Ingreso</button></div></form></Modal></div>);
+    };
+
+    // Panel de alertas lateral (con salidas activas y carpetas inactivas)
+    const AlertSidebar = ({ cadetes, salidas, externos }) => {
+        const hoyStr = hoy();
+        const carpetasInactivas = cadetes.filter(c => !c.medical.active);
+        const cumpleanosHoy = cadetes.filter(c => c.birthDate.slice(5) === hoyStr.slice(5));
+        const salidasActivas = salidas.filter(s => !s.retorno);
+        const externosActivos = externos.filter(e => !e.salida);
+        return (
+            <div className="w-80 bg-white rounded-xl shadow-md p-4 ml-4 flex-shrink-0 alert-sidebar">
+                <h3 className="font-bold text-lg mb-3"><i className="fas fa-bell text-amber-500"></i> Alertas relevantes</h3>
+                <div className="space-y-3 text-sm">
+                    <div className="bg-red-50 p-2 rounded"><i className="fas fa-notes-medical text-red-600"></i> <strong>Carpetas médicas inactivas:</strong> {carpetasInactivas.length ? carpetasInactivas.map(c=>c.firstName+' '+c.lastName).join(', ') : 'Ninguna'}</div>
+                    <div className="bg-green-50 p-2 rounded"><i className="fas fa-birthday-cake text-green-600"></i> <strong>Cumpleaños hoy:</strong> {cumpleanosHoy.length ? cumpleanosHoy.map(c=>c.firstName+' '+c.lastName).join(', ') : 'No hay'}</div>
+                    <div className="bg-blue-50 p-2 rounded"><i className="fas fa-clock text-blue-600"></i> <strong>Salidas momentáneas activas:</strong> {salidasActivas.length ? salidasActivas.map(s=>s.nombre).join(', ') : 'Ninguna'}</div>
+                    <div className="bg-purple-50 p-2 rounded"><i className="fas fa-user-friends text-purple-600"></i> <strong>Personas ajenas presentes:</strong> {externosActivos.length ? externosActivos.map(e=>e.nombre).join(', ') : 'Ninguna'}</div>
+                </div>
+            </div>
+        );
+    };
+
+    // APP PRINCIPAL
+    const App = () => {
+        const [cadetes, setCadetes] = useState(cadetesData);
+        const [salidas, setSalidas] = useState(salidasData);
+        const [externos, setExternos] = useState(externosData);
+        const [currentView, setCurrentView] = useState('cadetes');
+        const [selectedCadete, setSelectedCadete] = useState(null);
+        const [showCadeteModal, setShowCadeteModal] = useState(false);
+        const [editingCadete, setEditingCadete] = useState(null);
+        const [searchTerm, setSearchTerm] = useState('');
+        const [filtroYear, setFiltroYear] = useState('todos');
+        const [filtroSeccion, setFiltroSeccion] = useState('todos');
+
+        useEffect(() => { saveCadetes(); }, [cadetes]);
+        useEffect(() => { saveSalidas(); }, [salidas]);
+        useEffect(() => { saveExternos(); }, [externos]);
+
+        const updateCadete = (updated) => { setCadetes(prev => prev.map(c => c.id === updated.id ? updated : c)); if(selectedCadete?.id === updated.id) setSelectedCadete(updated); setShowCadeteModal(false); setEditingCadete(null); };
+        const addCadete = (newC) => { setCadetes(prev => [...prev, newC]); setShowCadeteModal(false); };
+        const deleteCadete = (id) => { if(confirm("Eliminar cadete?")) { setCadetes(prev => prev.filter(c => c.id !== id)); if(selectedCadete?.id === id) setSelectedCadete(null); } };
+        const addRetiroToCadete = (id, retiro) => { setCadetes(prev => prev.map(c => c.id === id ? { ...c, retiros: [...(c.retiros || []), retiro] } : c)); if(selectedCadete?.id === id) setSelectedCadete(prev => ({ ...prev, retiros: [...(prev.retiros || []), retiro] })); };
+        
+        const addSalida = (s) => setSalidas(prev => [...prev, s]);
+        const registrarRetorno = (id) => { const now = new Date().toISOString().slice(0,16); setSalidas(prev => prev.map(s => s.id === id ? { ...s, retorno: now } : s)); };
+        const deleteSalida = (id) => { if(confirm("Eliminar registro?")) setSalidas(prev => prev.filter(s => s.id !== id)); };
+        
+        const addExterno = (e) => setExternos(prev => [...prev, e]);
+        const registrarSalidaExterno = (id) => { const now = new Date().toISOString().slice(0,16); setExternos(prev => prev.map(ex => ex.id === id ? { ...ex, salida: now } : ex)); };
+        const deleteExterno = (id) => { if(confirm("Eliminar registro?")) setExternos(prev => prev.filter(e => e.id !== id)); };
+        
+        const filteredCadetes = cadetes.filter(c => {
+            const match = `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(searchTerm.toLowerCase());
+            const yearOk = filtroYear === 'todos' || c.year === parseInt(filtroYear);
+            const secOk = filtroSeccion === 'todos' || c.section === filtroSeccion;
+            return match && yearOk && secOk;
+        });
+
+        return (
+            <div className="min-h-screen bg-gray-100">
+                <header className="bg-gradient-to-r from-blue-800 to-slate-800 text-white shadow-lg">
+                    <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+                        <div className="flex items-center gap-3"><i className="fas fa-shield-alt text-3xl"></i><h1 className="text-2xl font-bold">Escuela de Cadetes - Gestión Integral</h1></div>
+                    </div>
+                </header>
+                <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
+                    <div className="flex-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                            <button onClick={() => { setCurrentView('cadetes'); setSelectedCadete(null); }} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'cadetes' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-blue-50'}`}><i className="fas fa-id-card text-2xl"></i><span className="font-bold">Cadetes</span></button>
+                            <button onClick={() => setCurrentView('medical')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'medical' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700 hover:bg-emerald-50'}`}><i className="fas fa-notes-medical text-2xl"></i><span className="font-bold">Carpetas Médicas</span></button>
+                            <button onClick={() => setCurrentView('salidas')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'salidas' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-indigo-50'}`}><i className="fas fa-clock text-2xl"></i><span className="font-bold">Salidas Momentáneas</span></button>
+                            <button onClick={() => setCurrentView('externos')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'externos' ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 hover:bg-purple-50'}`}><i className="fas fa-user-friends text-2xl"></i><span className="font-bold">Personas Ajenas</span></button>
+                        </div>
+
+                        {currentView === 'cadetes' && (
+                            <div className="flex flex-col lg:flex-row gap-6 bg-white rounded-xl shadow-md p-4">
+                                <div className="lg:w-2/5"><div className="flex flex-wrap gap-2 mb-4"><input type="text" placeholder="Buscar" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="border rounded px-3 py-2 flex-1"/><select value={filtroYear} onChange={e=>setFiltroYear(e.target.value)} className="border rounded px-2"><option value="todos">Año</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select><select value={filtroSeccion} onChange={e=>setFiltroSeccion(e.target.value)} className="border rounded px-2"><option value="todos">Sección</option><option>A</option><option>B</option><option>C</option></select><button onClick={()=>{setEditingCadete(null); setShowCadeteModal(true);}} className="bg-blue-600 text-white px-3 rounded"><i className="fas fa-plus"></i> Nuevo</button></div>
+                                <div className="max-h-[70vh] overflow-y-auto space-y-2">{filteredCadetes.map(c=> (<div key={c.id} onClick={()=>setSelectedCadete(c)} className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 border ${selectedCadete?.id===c.id?'bg-blue-50 border-blue-400':'hover:bg-gray-50'}`}><img src={c.photoUrl} className="w-12 h-12 rounded-full object-cover"/><div className="flex-1"><div className="font-bold">{c.firstName} {c.lastName}</div><div className="text-xs">DNI: {c.dni} | {c.year}°{c.section}</div></div><div><button onClick={(e)=>{e.stopPropagation(); setEditingCadete(c); setShowCadeteModal(true);}} className="text-blue-500 mr-2"><i className="fas fa-edit"></i></button><button onClick={(e)=>{e.stopPropagation(); deleteCadete(c.id);}} className="text-red-500"><i className="fas fa-trash"></i></button></div></div>))}</div></div>
+                                <div className="lg:w-3/5 p-3 overflow-y-auto max-h-[80vh]"><CadeteDetailPage cadete={selectedCadete} onEdit={()=>{setEditingCadete(selectedCadete); setShowCadeteModal(true);}} onAddRetiro={addRetiroToCadete}/></div>
+                            </div>
+                        )}
+                        {currentView === 'medical' && <MedicalFoldersManager cadetes={cadetes} onEditCadete={(c)=>{ setEditingCadete(c); setShowCadeteModal(true); setCurrentView('cadetes'); }} />}
+                        {currentView === 'salidas' && <SalidasMomentaneasManager salidas={salidas} onAdd={addSalida} onRegistrarRetorno={registrarRetorno} onDelete={deleteSalida} />}
+                        {currentView === 'externos' && <ExternosManager externos={externos} onAdd={addExterno} onRegistrarSalida={registrarSalidaExterno} onDelete={deleteExterno} />}
+                    </div>
+                    <AlertSidebar cadetes={cadetes} salidas={salidas} externos={externos} />
+                </div>
+                <Modal isOpen={showCadeteModal} onClose={()=>setShowCadeteModal(false)} title={editingCadete?"Editar Cadete":"Nuevo Cadete"}><CadeteForm cadete={editingCadete} onSave={(cad)=>{ editingCadete ? updateCadete(cad) : addCadete(cad); }} onCancel={()=>setShowCadeteModal(false)}/></Modal>
+            </div>
+        );
+    };
+    
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
 </body>
 </html>

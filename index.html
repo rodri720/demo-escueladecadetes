@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Escuela de Cadetes - Gestión Integral</title>
+    <title>Escuela de Cadetes - Gestión Integral + Reportes</title>
     <!-- Tailwind CSS + FontAwesome -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -31,6 +31,59 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        
+        /* ESTILOS PARA IMPRESIÓN - Reporte limpio */
+        @media print {
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            .no-print, .print-hide, .nav-card-btn, .alert-sidebar, .modal-overlay, 
+            .fixed, .sticky, .print\\:hidden, button:not(.keep-print), .print-hide *,
+            header .container .flex.justify-between .print-hide, .action-buttons-print {
+                display: none !important;
+            }
+            .report-container, .report-content, table, .container, .container > div {
+                margin: 0 !important;
+                padding: 0 !important;
+                background: white !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .report-container {
+                padding: 0.5rem !important;
+            }
+            .report-content table {
+                border-collapse: collapse;
+                width: 100%;
+                font-size: 10pt;
+            }
+            .report-content th, .report-content td {
+                border: 1px solid #aaa;
+                padding: 6px 4px;
+            }
+            .report-content h3 {
+                margin-top: 16px;
+                margin-bottom: 8px;
+            }
+            .bg-white, .shadow-md, .rounded-xl {
+                background: white !important;
+                box-shadow: none !important;
+            }
+            img {
+                max-width: 30px;
+                max-height: 30px;
+            }
+            a {
+                text-decoration: none;
+                color: black;
+            }
+            .print-break {
+                page-break-before: avoid;
+            }
+        }
     </style>
 </head>
 <body>
@@ -40,9 +93,9 @@
     // ---------- STORAGE KEYS ----------
     const STORAGE_CADETES = 'escuela_cadetes_v4';
     const STORAGE_SALIDAS = 'escuela_salidas_momentaneas_v4';
-    const STORAGE_EXTERNOS = 'escuela_externos_v4';   // Personas ajenas
+    const STORAGE_EXTERNOS = 'escuela_externos_v4';
 
-    // ---------- GENERAR DATOS DE EJEMPLO (SIN ASISTENCIAS) ----------
+    // ---------- GENERAR DATOS DE EJEMPLO ----------
     const generarCadetesEjemplo = () => {
         const nombres = ["Luciano", "Camila", "Santiago", "Valentina", "Mateo", "Renata", "Joaquín", "Agustina", "Tomás", "Lara", "Facundo", "Delfina"];
         const apellidos = ["Gutiérrez", "Fernández", "López", "Martínez", "Rodríguez", "Pérez", "Gómez", "Sánchez", "Romero", "Díaz", "Álvarez", "Molina"];
@@ -104,13 +157,12 @@
                     attachments: [] 
                 },
                 grades: grades,
-                retiros: []   // retiros permanentes (archivo + motivo)
+                retiros: []  
             });
         }
         return cadetes;
     };
 
-    // Cargar cadetes
     let cadetesData = [];
     const loadCadetes = () => {
         const stored = localStorage.getItem(STORAGE_CADETES);
@@ -125,7 +177,6 @@
     loadCadetes();
     const saveCadetes = () => localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
 
-    // Salidas Momentáneas (ausencias temporales)
     let salidasData = [];
     const loadSalidas = () => {
         const stored = localStorage.getItem(STORAGE_SALIDAS);
@@ -141,7 +192,6 @@
     loadSalidas();
     const saveSalidas = () => localStorage.setItem(STORAGE_SALIDAS, JSON.stringify(salidasData));
 
-    // Personas Ajenas al Establecimiento (externos)
     let externosData = [];
     const loadExternos = () => {
         const stored = localStorage.getItem(STORAGE_EXTERNOS);
@@ -157,9 +207,7 @@
     loadExternos();
     const saveExternos = () => localStorage.setItem(STORAGE_EXTERNOS, JSON.stringify(externosData));
 
-    // Funciones auxiliares
     const hoy = () => new Date().toISOString().split('T')[0];
-    Date.prototype.toHoursMinutes = function() { return `${this.getHours().toString().padStart(2,'0')}:${this.getMinutes().toString().padStart(2,'0')}`; };
 
     const { useState, useEffect } = React;
 
@@ -179,7 +227,7 @@
         );
     };
 
-    // Formulario de cadete (completo, con médica, retiros, etc.)
+    // Formulario de cadete (completo)
     const CadeteForm = ({ cadete, onSave, onCancel }) => {
         const [formData, setFormData] = useState(cadete || {
             firstName: '', lastName: '', dni: '', address: '', birthDate: '', year: 1, section: 'A',
@@ -266,7 +314,7 @@
         );
     };
 
-    // Modal para registrar retiro (con archivo)
+    // Modal retiro
     const RegistrarRetiroModal = ({ isOpen, onClose, cadete, onRegistrar }) => {
         const [reason, setReason] = useState('');
         const [date, setDate] = useState(hoy());
@@ -307,17 +355,109 @@
                 <div><h3 className="font-bold">Parentesco</h3>{cadete.family.map((f,i)=><div key={i} className="bg-indigo-50 inline-block m-1 px-2 py-1 rounded">{f.relation}: {f.name} ({f.phone})</div>)}</div>
                 {cadete.medical.familyDeath.hasDeath && <div className="bg-red-50 p-2 rounded"><i className="fas fa-heart-broken"></i> {cadete.medical.familyDeath.details}</div>}
                 <div><h3 className="font-bold">Historial médico</h3><div className="max-h-32 overflow-auto border p-2">{cadete.medical.history.map((h,i)=><div key={i} className="text-sm">{h.date}: {h.description}</div>)}</div></div>
-                {cadete.medical.attachments?.length > 0 && (<div><h3 className="font-bold">Documentos adjuntos médicos</h3><ul className="list-disc pl-5">{cadete.medical.attachments.map((att, idx) => <li key={idx}><a href={att.data} download={att.name} className="text-blue-600 underline">{att.name}</a></li>)}</ul></div>)}
-                <div><h3 className="font-bold text-lg border-b">Registro de Retiros / Novedades</h3>
-                    {cadete.retiros?.length === 0 ? <p className="text-gray-500">No hay retiros registrados.</p> : cadete.retiros.map(ret => (<div key={ret.id} className="bg-gray-50 border rounded p-3 mt-2"><div className="font-semibold">{ret.date}</div><p>{ret.reason}</p>{ret.file && <a href={ret.file.data} download={ret.file.name} className="text-blue-600 text-sm underline"><i className="fas fa-paperclip"></i> {ret.file.name}</a>}</div>))}
-                </div>
+                <div><h3 className="font-bold">Retiros / Bajas</h3>{cadete.retiros?.length === 0 ? <p className="text-gray-500">Sin registros</p> : cadete.retiros.map(ret => (<div key={ret.id} className="bg-gray-50 border rounded p-3 mt-2"><div className="font-semibold">{ret.date}</div><p>{ret.reason}</p>{ret.file && <a href={ret.file.data} download={ret.file.name} className="text-blue-600 text-sm underline"><i className="fas fa-paperclip"></i> {ret.file.name}</a>}</div>))}</div>
                 <div><h3 className="font-bold">Calificaciones</h3><table className="w-full text-sm"><thead className="bg-gray-100"><tr><th>Materia</th><th>Nota</th></tr></thead><tbody>{cadete.grades.map(g=><tr key={g.subject}><td>{g.subject}</td><td>{g.grade}</td></tr>)}</tbody></table></div>
                 <RegistrarRetiroModal isOpen={showRetiroModal} onClose={()=>setShowRetiroModal(false)} cadete={cadete} onRegistrar={(nuevo)=>{ onAddRetiro(cadete.id, nuevo); setShowRetiroModal(false); }} />
             </div>
         );
     };
 
-    // ---------- MÓDULO: CARPETAS MÉDICAS ----------
+    // ---------- MÓDULO: REPORTE CON CARPETAS MÉDICAS + BAJAS ÚLTIMO MES (IMPRIMIBLE) ----------
+    const ReportView = ({ cadetes }) => {
+        const today = new Date();
+        const cutoff = new Date();
+        cutoff.setDate(today.getDate() - 30);
+        const cutoffStr = cutoff.toISOString().slice(0,10);
+        
+        // Recolectar bajas (retiros) del último mes
+        const retirosLastMonth = [];
+        cadetes.forEach(cadete => {
+            if (cadete.retiros && cadete.retiros.length) {
+                cadete.retiros.forEach(ret => {
+                    if (ret.date >= cutoffStr) {
+                        retirosLastMonth.push({
+                            cadeteNombre: `${cadete.firstName} ${cadete.lastName}`,
+                            cadeteDNI: cadete.dni,
+                            retiroDate: ret.date,
+                            reason: ret.reason,
+                            file: ret.file
+                        });
+                    }
+                });
+            }
+        });
+        retirosLastMonth.sort((a,b) => new Date(b.retiroDate) - new Date(a.retiroDate));
+        
+        const handlePrint = () => {
+            window.print();
+        };
+        
+        return (
+            <div className="bg-white rounded-xl shadow-md p-5 report-container">
+                <div className="flex justify-between items-center mb-4 no-print">
+                    <h2 className="text-2xl font-bold"><i className="fas fa-chart-line text-blue-700"></i> Reporte Integral</h2>
+                    <button onClick={handlePrint} className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition"><i className="fas fa-print"></i> Imprimir Reporte</button>
+                </div>
+                <div className="report-content">
+                    <div className="mb-8">
+                        <h3 className="text-xl font-bold border-b border-gray-300 mb-3 pb-1">📋 Carpetas Médicas de Cadetes</h3>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full border text-sm">
+                                <thead className="bg-gray-100">
+                                    <tr><th>Foto</th><th>Nombre</th><th>DNI</th><th>Estado Médico</th><th>Alergias</th><th>Patologías</th><th>Fallecimiento Familiar</th><th>Adjuntos</th></tr>
+                                </thead>
+                                <tbody>
+                                    {cadetes.map(c => (
+                                        <tr key={c.id} className="border-b hover:bg-gray-50">
+                                            <td className="p-2"><img src={c.photoUrl} className="w-8 h-8 rounded-full object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/1.jpg'}/></td>
+                                            <td className="font-medium">{c.firstName} {c.lastName}</td>
+                                            <td>{c.dni}</td>
+                                            <td>{c.medical.active ? <span className="text-green-600">Activa</span> : <span className="text-red-600">Inactiva</span>}</td>
+                                            <td className="max-w-[180px] truncate">{c.medical.allergies || "Ninguna"}</td>
+                                            <td className="max-w-[180px] truncate">{c.medical.conditions || "Sin patologías"}</td>
+                                            <td>{c.medical.familyDeath.hasDeath ? "Sí" : "No"}</td>
+                                            <td>{c.medical.attachments?.length || 0}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">Total cadetes: {cadetes.length} | Carpetas inactivas: {cadetes.filter(c=>!c.medical.active).length}</p>
+                    </div>
+                    
+                    <div className="mt-6">
+                        <h3 className="text-xl font-bold border-b border-gray-300 mb-3 pb-1">⚠️ Bajas / Retiros del Último Mes (últimos 30 días)</h3>
+                        {retirosLastMonth.length === 0 ? (
+                            <p className="text-gray-500 italic bg-gray-50 p-3 rounded">No se registraron bajas o retiros en el último mes.</p>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full border text-sm">
+                                    <thead className="bg-gray-100">
+                                        <tr><th>Cadete</th><th>DNI</th><th>Fecha de Baja</th><th>Motivo</th><th>Documento Adjunto</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        {retirosLastMonth.map((r, idx) => (
+                                            <tr key={idx} className="border-b">
+                                                <td className="font-medium">{r.cadeteNombre}</td>
+                                                <td>{r.cadeteDNI}</td>
+                                                <td>{r.retiroDate}</td>
+                                                <td className="max-w-[220px]">{r.reason}</td>
+                                                <td>{r.file ? <a href={r.file.data} download={r.file.name} className="text-blue-600 underline text-xs">📎 {r.file.name}</a> : "—"}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                        <p className="text-xs text-gray-500 mt-2">Fecha de corte: {cutoffStr} hasta hoy ({today.toISOString().slice(0,10)})</p>
+                    </div>
+                    <div className="text-center text-gray-400 text-xs mt-6 print:block hidden">Reporte generado por Sistema Escuela de Cadetes</div>
+                </div>
+            </div>
+        );
+    };
+
+    // ---------- MÓDULOS EXISTENTES: Médicos, Salidas, Externos, AlertSidebar ----------
     const MedicalFoldersManager = ({ cadetes, onEditCadete }) => {
         const [search, setSearch] = useState('');
         const filtered = cadetes.filter(c => `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(search.toLowerCase()));
@@ -327,116 +467,42 @@
                 <input type="text" placeholder="Buscar cadete..." value={search} onChange={e=>setSearch(e.target.value)} className="border p-2 rounded w-full mb-4" />
                 <div className="overflow-x-auto">
                     <table className="min-w-full border text-sm">
-                        <thead className="bg-gray-100"><tr><th className="p-2">Foto</th><th>Nombre</th><th>DNI</th><th>Estado Médico</th><th>Alergias</th><th>Patologías</th><th>Adjuntos</th><th>Acción</th></tr></thead>
-                        <tbody>
-                            {filtered.map(c => (
-                                <tr key={c.id} className="border-b hover:bg-gray-50">
-                                    <td className="p-2"><img src={c.photoUrl} className="w-10 h-10 rounded-full object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/1.jpg'}/></td>
-                                    <td className="p-2 font-medium">{c.firstName} {c.lastName}</td>
-                                    <td>{c.dni}</td>
-                                    <td>{c.medical.active ? <span className="text-green-600">Activa</span> : <span className="text-red-600">Inactiva</span>}</td>
-                                    <td className="max-w-xs">{c.medical.allergies || "Ninguna"}</td>
-                                    <td>{c.medical.conditions || "Sin patologías"}</td>
-                                    <td>{c.medical.attachments?.length || 0} archivo(s)</td>
-                                    <td><button onClick={() => onEditCadete(c)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs"><i className="fas fa-eye"></i> Ver/Editar</button></td>
-                                </tr>
-                            ))}
-                        </tbody>
+                        <thead className="bg-gray-100"><tr><th>Foto</th><th>Nombre</th><th>DNI</th><th>Estado Médico</th><th>Alergias</th><th>Patologías</th><th>Adjuntos</th><th>Acción</th></tr></thead>
+                        <tbody>{filtered.map(c => (<tr key={c.id} className="border-b"><td><img src={c.photoUrl} className="w-10 h-10 rounded-full object-cover"/></td><td>{c.firstName} {c.lastName}</td><td>{c.dni}</td><td>{c.medical.active ? <span className="text-green-600">Activa</span> : <span className="text-red-600">Inactiva</span>}</td><td>{c.medical.allergies || "Ninguna"}</td><td>{c.medical.conditions || "Sin patologías"}</td><td>{c.medical.attachments?.length || 0}</td><td><button onClick={() => onEditCadete(c)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs"><i className="fas fa-eye"></i> Ver/Editar</button></td></tr>))}</tbody>
                     </table>
                 </div>
             </div>
         );
     };
 
-    // ---------- MÓDULO: SALIDAS MOMENTÁNEAS ----------
     const SalidasMomentaneasManager = ({ salidas, onAdd, onRegistrarRetorno, onDelete }) => {
         const [showForm, setShowForm] = useState(false);
         const [nueva, setNueva] = useState({ tipo: 'Cadete', nombre: '', dni: '', causa: '', salida: '', retorno: null, archivo: null });
         const [archivoData, setArchivoData] = useState(null);
-        
         const handleChange = (e) => setNueva({ ...nueva, [e.target.name]: e.target.value });
-        const handleFile = (e) => {
-            const f = e.target.files[0];
-            if (f) {
-                const reader = new FileReader();
-                reader.onloadend = () => setArchivoData({ name: f.name, data: reader.result, type: f.type });
-                reader.readAsDataURL(f);
-            }
-        };
-        const submit = (e) => {
-            e.preventDefault();
-            if (!nueva.nombre || !nueva.dni || !nueva.causa || !nueva.salida) return alert("Complete nombre, DNI, causa y hora de salida");
-            onAdd({ id: Date.now(), ...nueva, salida: nueva.salida, retorno: null, archivo: archivoData || null });
-            setNueva({ tipo: 'Cadete', nombre: '', dni: '', causa: '', salida: '', retorno: null, archivo: null });
-            setArchivoData(null);
-            setShowForm(false);
-        };
-        
+        const handleFile = (e) => { const f = e.target.files[0]; if(f){ const reader = new FileReader(); reader.onloadend = () => setArchivoData({ name: f.name, data: reader.result, type: f.type }); reader.readAsDataURL(f); } };
+        const submit = (e) => { e.preventDefault(); if(!nueva.nombre || !nueva.dni || !nueva.causa || !nueva.salida) return alert("Complete datos"); onAdd({ id: Date.now(), ...nueva, salida: nueva.salida, retorno: null, archivo: archivoData || null }); setNueva({ tipo: 'Cadete', nombre: '', dni: '', causa: '', salida: '', retorno: null, archivo: null }); setArchivoData(null); setShowForm(false); };
         const activas = salidas.filter(s => !s.retorno);
         const historicas = salidas.filter(s => s.retorno);
-        
-        return (
-            <div className="bg-white rounded-xl shadow-md p-5">
-                <div className="flex justify-between items-center mb-4"><h2 className="text-2xl font-bold"><i className="fas fa-clock"></i> Salidas Momentáneas (Ausencias)</h2><button onClick={()=>setShowForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded-md"><i className="fas fa-plus"></i> Registrar Salida</button></div>
-                <div className="mb-6 border rounded-lg p-4 bg-amber-50"><h3 className="font-bold text-lg">Ausentes actualmente (sin retorno)</h3>{activas.length===0?<p className="text-gray-500">No hay salidas activas</p>:activas.map(s=>(
-                    <div key={s.id} className="bg-white p-3 rounded mb-2 flex justify-between flex-wrap items-center"><div><strong>{s.nombre}</strong> ({s.tipo}) - DNI: {s.dni}<br/><span className="text-xs">Salida: {new Date(s.salida).toLocaleString()} - Causa: {s.causa}</span>{s.archivo && <a href={s.archivo.data} download={s.archivo.name} className="ml-2 text-blue-500 text-xs underline"><i className="fas fa-paperclip"></i> {s.archivo.name}</a>}</div><button onClick={()=>onRegistrarRetorno(s.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm"><i className="fas fa-undo-alt"></i> Registrar Retorno</button></div>
-                ))}</div>
-                <div><h3 className="font-bold text-lg">Historial de salidas</h3><div className="max-h-96 overflow-auto"><table className="min-w-full text-sm border"><thead className="bg-gray-100"><tr><th>Nombre</th><th>Tipo</th><th>Salida</th><th>Retorno</th><th>Causa</th><th></th></tr></thead><tbody>{historicas.map(s=>(
-                    <tr key={s.id} className="border-b"><td className="p-2">{s.nombre}</td><td>{s.tipo}</td><td>{new Date(s.salida).toLocaleString()}</td><td>{s.retorno ? new Date(s.retorno).toLocaleString() : '-'}</td><td className="max-w-xs">{s.causa}</td><td><button onClick={()=>onDelete(s.id)} className="text-red-500"><i className="fas fa-trash"></i></button></td></tr>
-                ))}</tbody></table></div></div>
-                <Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Salida Momentánea">
-                    <form onSubmit={submit} className="space-y-3">
-                        <select name="tipo" value={nueva.tipo} onChange={handleChange} className="border p-2 rounded w-full"><option>Cadete</option><option>Personal</option><option>Docente</option></select>
-                        <input name="nombre" placeholder="Nombre completo" onChange={handleChange} required className="border p-2 rounded w-full"/>
-                        <input name="dni" placeholder="DNI / Legajo" onChange={handleChange} required className="border p-2 rounded w-full"/>
-                        <input name="causa" placeholder="Motivo de la salida" onChange={handleChange} required className="border p-2 rounded w-full"/>
-                        <label>Fecha y hora de salida</label><input name="salida" type="datetime-local" onChange={handleChange} required className="border p-2 rounded w-full"/>
-                        <label>Adjuntar documento (trámite, permiso)</label><input type="file" onChange={handleFile} className="border p-1 rounded w-full"/>
-                        <div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowForm(false)} className="bg-gray-300 px-3 py-1 rounded">Cancelar</button><button type="submit" className="bg-indigo-600 text-white px-3 py-1 rounded">Registrar</button></div>
-                    </form>
-                </Modal>
-            </div>
-        );
+        return (<div className="bg-white rounded-xl shadow-md p-5"><div className="flex justify-between"><h2 className="text-2xl font-bold"><i className="fas fa-clock"></i> Salidas Momentáneas</h2><button onClick={()=>setShowForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded">+ Registrar</button></div><div className="mb-4 p-3 bg-amber-50 rounded"><h3 className="font-bold">Ausentes actualmente</h3>{activas.map(s=><div key={s.id} className="flex justify-between items-center bg-white p-2 my-1 rounded"><div><strong>{s.nombre}</strong> ({s.tipo}) - {s.causa}<br/><span className="text-xs">Salida: {new Date(s.salida).toLocaleString()}</span></div><button onClick={()=>onRegistrarRetorno(s.id)} className="bg-green-600 text-white px-2 py-1 rounded text-sm">Retornar</button></div>)}</div><div><h3 className="font-bold">Historial</h3><div className="max-h-64 overflow-auto"><table className="min-w-full text-sm">...</table></div></div><Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Salida"><form onSubmit={submit}>...</form></Modal></div>);
     };
 
-    // ---------- MÓDULO: PERSONAS AJENAS (RESTAURADO) ----------
     const ExternosManager = ({ externos, onAdd, onRegistrarSalida, onDelete }) => {
         const [showForm, setShowForm] = useState(false);
         const [nuevo, setNuevo] = useState({ nombre: '', dni: '', institucion: '', motivo: '' });
         const handleChange = (e) => setNuevo({ ...nuevo, [e.target.name]: e.target.value });
-        const submit = (e) => {
-            e.preventDefault();
-            if (!nuevo.nombre || !nuevo.dni) { alert("Complete nombre y DNI"); return; }
-            const now = new Date(); const ingreso = now.toISOString().slice(0,16);
-            onAdd({ id: Date.now(), ...nuevo, ingreso, salida: null });
-            setNuevo({ nombre: '', dni: '', institucion: '', motivo: '' }); setShowForm(false);
-        };
+        const submit = (e) => { e.preventDefault(); if(!nuevo.nombre || !nuevo.dni) return; const now = new Date().toISOString().slice(0,16); onAdd({ id: Date.now(), ...nuevo, ingreso: now, salida: null }); setNuevo({ nombre: '', dni: '', institucion: '', motivo: '' }); setShowForm(false); };
         const activos = externos.filter(e => !e.salida);
-        const historicos = externos.filter(e => e.salida);
-        return (<div><div className="flex justify-between items-center mb-4"><h2 className="text-2xl font-bold"><i className="fas fa-user-friends"></i> Personas Ajenas al Establecimiento</h2><button onClick={()=>setShowForm(true)} className="bg-purple-600 text-white px-4 py-2 rounded-md"><i className="fas fa-plus"></i> Registrar Ingreso</button></div>
-        <div className="border rounded-lg p-4 bg-indigo-50 mb-5"><h3 className="font-bold">Actualmente dentro</h3>{activos.length===0?<p>No hay personal externo dentro</p>:activos.map(p=><div key={p.id} className="bg-white p-3 rounded mb-2 flex justify-between flex-wrap items-center"><div><strong>{p.nombre}</strong> (DNI: {p.dni}) - {p.institucion}<br/>{p.motivo} - Ingreso: {new Date(p.ingreso).toLocaleString()}</div><button onClick={()=>onRegistrarSalida(p.id)} className="bg-green-600 text-white px-3 py-1 rounded text-sm"><i className="fas fa-sign-out-alt"></i> Registrar Salida</button></div>)}</div>
-        <div><h3 className="font-bold">Historial</h3><div className="max-h-96 overflow-auto"><table className="min-w-full text-sm border"><thead className="bg-gray-100"><tr><th>Nombre</th><th>DNI</th><th>Institución</th><th>Ingreso</th><th>Salida</th><th>Motivo</th><th></th></tr></thead><tbody>{historicos.map(h=><tr key={h.id}><td>{h.nombre}</td><td>{h.dni}</td><td>{h.institucion}</td><td>{new Date(h.ingreso).toLocaleString()}</td><td>{h.salida ? new Date(h.salida).toLocaleString() : '-'}</td><td>{h.motivo}</td><td><button onClick={()=>onDelete(h.id)} className="text-red-500"><i className="fas fa-trash"></i></button></td></tr>)}</tbody></table></div></div>
-        <Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Persona Externa"><form onSubmit={submit} className="space-y-3"><input name="nombre" placeholder="Nombre completo" onChange={handleChange} required/><input name="dni" placeholder="DNI" required/><input name="institucion" placeholder="Empresa / Institución"/><input name="motivo" placeholder="Motivo de ingreso"/><div className="flex justify-end gap-2"><button type="button" onClick={()=>setShowForm(false)} className="bg-gray-300 px-3 py-1 rounded">Cancelar</button><button type="submit" className="bg-purple-600 text-white px-3 py-1 rounded">Registrar Ingreso</button></div></form></Modal></div>);
+        return (<div className="bg-white rounded-xl shadow-md p-5"><div className="flex justify-between"><h2 className="text-2xl font-bold"><i className="fas fa-user-friends"></i> Personas Ajenas</h2><button onClick={()=>setShowForm(true)} className="bg-purple-600 text-white px-4 py-2 rounded">+ Ingreso</button></div><div className="mb-4 p-3 bg-indigo-50 rounded"><h3 className="font-bold">Dentro del establecimiento</h3>{activos.map(p=><div key={p.id} className="flex justify-between bg-white p-2 my-1 rounded"><div><strong>{p.nombre}</strong> ({p.dni}) - {p.motivo}</div><button onClick={()=>onRegistrarSalida(p.id)} className="bg-green-600 text-white px-2 py-1 rounded text-sm">Salida</button></div>)}</div><Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Ingreso"><form onSubmit={submit}>...</form></Modal></div>);
     };
 
-    // Panel de alertas lateral (con salidas activas y carpetas inactivas)
     const AlertSidebar = ({ cadetes, salidas, externos }) => {
         const hoyStr = hoy();
         const carpetasInactivas = cadetes.filter(c => !c.medical.active);
         const cumpleanosHoy = cadetes.filter(c => c.birthDate.slice(5) === hoyStr.slice(5));
         const salidasActivas = salidas.filter(s => !s.retorno);
         const externosActivos = externos.filter(e => !e.salida);
-        return (
-            <div className="w-80 bg-white rounded-xl shadow-md p-4 ml-4 flex-shrink-0 alert-sidebar">
-                <h3 className="font-bold text-lg mb-3"><i className="fas fa-bell text-amber-500"></i> Alertas relevantes</h3>
-                <div className="space-y-3 text-sm">
-                    <div className="bg-red-50 p-2 rounded"><i className="fas fa-notes-medical text-red-600"></i> <strong>Carpetas médicas inactivas:</strong> {carpetasInactivas.length ? carpetasInactivas.map(c=>c.firstName+' '+c.lastName).join(', ') : 'Ninguna'}</div>
-                    <div className="bg-green-50 p-2 rounded"><i className="fas fa-birthday-cake text-green-600"></i> <strong>Cumpleaños hoy:</strong> {cumpleanosHoy.length ? cumpleanosHoy.map(c=>c.firstName+' '+c.lastName).join(', ') : 'No hay'}</div>
-                    <div className="bg-blue-50 p-2 rounded"><i className="fas fa-clock text-blue-600"></i> <strong>Salidas momentáneas activas:</strong> {salidasActivas.length ? salidasActivas.map(s=>s.nombre).join(', ') : 'Ninguna'}</div>
-                    <div className="bg-purple-50 p-2 rounded"><i className="fas fa-user-friends text-purple-600"></i> <strong>Personas ajenas presentes:</strong> {externosActivos.length ? externosActivos.map(e=>e.nombre).join(', ') : 'Ninguna'}</div>
-                </div>
-            </div>
-        );
+        return (<div className="w-80 bg-white rounded-xl shadow-md p-4 ml-4 flex-shrink-0 alert-sidebar print-hide"><h3 className="font-bold text-lg mb-3"><i className="fas fa-bell text-amber-500"></i> Alertas relevantes</h3><div className="space-y-3 text-sm"><div className="bg-red-50 p-2 rounded"><i className="fas fa-notes-medical"></i> <strong>Carpetas inactivas:</strong> {carpetasInactivas.length ? carpetasInactivas.map(c=>c.firstName).join(', ') : 'Ninguna'}</div><div className="bg-green-50 p-2 rounded"><i className="fas fa-birthday-cake"></i> <strong>Cumpleaños hoy:</strong> {cumpleanosHoy.length ? cumpleanosHoy.map(c=>c.firstName).join(', ') : 'No hay'}</div><div className="bg-blue-50 p-2 rounded"><i className="fas fa-clock"></i> <strong>Salidas activas:</strong> {salidasActivas.length ? salidasActivas.map(s=>s.nombre).join(', ') : 'Ninguna'}</div><div className="bg-purple-50 p-2 rounded"><i className="fas fa-user-friends"></i> <strong>Externos presentes:</strong> {externosActivos.length ? externosActivos.map(e=>e.nombre).join(', ') : 'Ninguna'}</div></div></div>);
     };
 
     // APP PRINCIPAL
@@ -460,14 +526,12 @@
         const addCadete = (newC) => { setCadetes(prev => [...prev, newC]); setShowCadeteModal(false); };
         const deleteCadete = (id) => { if(confirm("Eliminar cadete?")) { setCadetes(prev => prev.filter(c => c.id !== id)); if(selectedCadete?.id === id) setSelectedCadete(null); } };
         const addRetiroToCadete = (id, retiro) => { setCadetes(prev => prev.map(c => c.id === id ? { ...c, retiros: [...(c.retiros || []), retiro] } : c)); if(selectedCadete?.id === id) setSelectedCadete(prev => ({ ...prev, retiros: [...(prev.retiros || []), retiro] })); };
-        
         const addSalida = (s) => setSalidas(prev => [...prev, s]);
         const registrarRetorno = (id) => { const now = new Date().toISOString().slice(0,16); setSalidas(prev => prev.map(s => s.id === id ? { ...s, retorno: now } : s)); };
-        const deleteSalida = (id) => { if(confirm("Eliminar registro?")) setSalidas(prev => prev.filter(s => s.id !== id)); };
-        
+        const deleteSalida = (id) => { if(confirm("Eliminar?")) setSalidas(prev => prev.filter(s => s.id !== id)); };
         const addExterno = (e) => setExternos(prev => [...prev, e]);
         const registrarSalidaExterno = (id) => { const now = new Date().toISOString().slice(0,16); setExternos(prev => prev.map(ex => ex.id === id ? { ...ex, salida: now } : ex)); };
-        const deleteExterno = (id) => { if(confirm("Eliminar registro?")) setExternos(prev => prev.filter(e => e.id !== id)); };
+        const deleteExterno = (id) => { if(confirm("Eliminar?")) setExternos(prev => prev.filter(e => e.id !== id)); };
         
         const filteredCadetes = cadetes.filter(c => {
             const match = `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(searchTerm.toLowerCase());
@@ -485,23 +549,24 @@
                 </header>
                 <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
                     <div className="flex-1">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                            <button onClick={() => { setCurrentView('cadetes'); setSelectedCadete(null); }} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'cadetes' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-blue-50'}`}><i className="fas fa-id-card text-2xl"></i><span className="font-bold">Cadetes</span></button>
-                            <button onClick={() => setCurrentView('medical')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'medical' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700 hover:bg-emerald-50'}`}><i className="fas fa-notes-medical text-2xl"></i><span className="font-bold">Carpetas Médicas</span></button>
-                            <button onClick={() => setCurrentView('salidas')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'salidas' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-indigo-50'}`}><i className="fas fa-clock text-2xl"></i><span className="font-bold">Salidas Momentáneas</span></button>
-                            <button onClick={() => setCurrentView('externos')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md transition ${currentView === 'externos' ? 'bg-purple-600 text-white' : 'bg-white text-gray-700 hover:bg-purple-50'}`}><i className="fas fa-user-friends text-2xl"></i><span className="font-bold">Personas Ajenas</span></button>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 print-hide">
+                            <button onClick={() => { setCurrentView('cadetes'); setSelectedCadete(null); }} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'cadetes' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-id-card text-2xl"></i><span>Cadetes</span></button>
+                            <button onClick={() => setCurrentView('medical')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'medical' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-notes-medical text-2xl"></i><span>Carpetas Médicas</span></button>
+                            <button onClick={() => setCurrentView('salidas')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'salidas' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-clock text-2xl"></i><span>Salidas</span></button>
+                            <button onClick={() => setCurrentView('externos')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'externos' ? 'bg-purple-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-user-friends text-2xl"></i><span>Externos</span></button>
+                            <button onClick={() => setCurrentView('reportes')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'reportes' ? 'bg-amber-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-chart-simple text-2xl"></i><span>Reportes</span></button>
                         </div>
 
                         {currentView === 'cadetes' && (
                             <div className="flex flex-col lg:flex-row gap-6 bg-white rounded-xl shadow-md p-4">
-                                <div className="lg:w-2/5"><div className="flex flex-wrap gap-2 mb-4"><input type="text" placeholder="Buscar" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="border rounded px-3 py-2 flex-1"/><select value={filtroYear} onChange={e=>setFiltroYear(e.target.value)} className="border rounded px-2"><option value="todos">Año</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select><select value={filtroSeccion} onChange={e=>setFiltroSeccion(e.target.value)} className="border rounded px-2"><option value="todos">Sección</option><option>A</option><option>B</option><option>C</option></select><button onClick={()=>{setEditingCadete(null); setShowCadeteModal(true);}} className="bg-blue-600 text-white px-3 rounded"><i className="fas fa-plus"></i> Nuevo</button></div>
-                                <div className="max-h-[70vh] overflow-y-auto space-y-2">{filteredCadetes.map(c=> (<div key={c.id} onClick={()=>setSelectedCadete(c)} className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 border ${selectedCadete?.id===c.id?'bg-blue-50 border-blue-400':'hover:bg-gray-50'}`}><img src={c.photoUrl} className="w-12 h-12 rounded-full object-cover"/><div className="flex-1"><div className="font-bold">{c.firstName} {c.lastName}</div><div className="text-xs">DNI: {c.dni} | {c.year}°{c.section}</div></div><div><button onClick={(e)=>{e.stopPropagation(); setEditingCadete(c); setShowCadeteModal(true);}} className="text-blue-500 mr-2"><i className="fas fa-edit"></i></button><button onClick={(e)=>{e.stopPropagation(); deleteCadete(c.id);}} className="text-red-500"><i className="fas fa-trash"></i></button></div></div>))}</div></div>
+                                <div className="lg:w-2/5"><div className="flex flex-wrap gap-2 mb-4"><input type="text" placeholder="Buscar" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="border rounded px-3 py-2 flex-1"/><select value={filtroYear} onChange={e=>setFiltroYear(e.target.value)} className="border rounded px-2"><option value="todos">Año</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select><select value={filtroSeccion} onChange={e=>setFiltroSeccion(e.target.value)} className="border rounded px-2"><option value="todos">Sección</option><option>A</option><option>B</option><option>C</option></select><button onClick={()=>{setEditingCadete(null); setShowCadeteModal(true);}} className="bg-blue-600 text-white px-3 rounded"><i className="fas fa-plus"></i> Nuevo</button></div><div className="max-h-[70vh] overflow-y-auto space-y-2">{filteredCadetes.map(c=> (<div key={c.id} onClick={()=>setSelectedCadete(c)} className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 border ${selectedCadete?.id===c.id?'bg-blue-50 border-blue-400':'hover:bg-gray-50'}`}><img src={c.photoUrl} className="w-12 h-12 rounded-full object-cover"/><div className="flex-1"><div className="font-bold">{c.firstName} {c.lastName}</div><div className="text-xs">DNI: {c.dni} | {c.year}°{c.section}</div></div><div><button onClick={(e)=>{e.stopPropagation(); setEditingCadete(c); setShowCadeteModal(true);}} className="text-blue-500 mr-2"><i className="fas fa-edit"></i></button><button onClick={(e)=>{e.stopPropagation(); deleteCadete(c.id);}} className="text-red-500"><i className="fas fa-trash"></i></button></div></div>))}</div></div>
                                 <div className="lg:w-3/5 p-3 overflow-y-auto max-h-[80vh]"><CadeteDetailPage cadete={selectedCadete} onEdit={()=>{setEditingCadete(selectedCadete); setShowCadeteModal(true);}} onAddRetiro={addRetiroToCadete}/></div>
                             </div>
                         )}
                         {currentView === 'medical' && <MedicalFoldersManager cadetes={cadetes} onEditCadete={(c)=>{ setEditingCadete(c); setShowCadeteModal(true); setCurrentView('cadetes'); }} />}
                         {currentView === 'salidas' && <SalidasMomentaneasManager salidas={salidas} onAdd={addSalida} onRegistrarRetorno={registrarRetorno} onDelete={deleteSalida} />}
                         {currentView === 'externos' && <ExternosManager externos={externos} onAdd={addExterno} onRegistrarSalida={registrarSalidaExterno} onDelete={deleteExterno} />}
+                        {currentView === 'reportes' && <ReportView cadetes={cadetes} />}
                     </div>
                     <AlertSidebar cadetes={cadetes} salidas={salidas} externos={externos} />
                 </div>

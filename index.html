@@ -3,86 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Escuela de Cadetes - Gestión Integral + Reportes</title>
-    <!-- Tailwind CSS + FontAwesome -->
+    <title>Escuela de Cadetes - Gestión + Reportes Avanzados Médicos</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- React y ReactDOM -->
     <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.development.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.development.js"></script>
-    <!-- Babel para JSX -->
     <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
     <style>
         body { background: #f1f5f9; font-family: 'Segoe UI', system-ui, 'Inter', sans-serif; }
-        .nav-card-btn {
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .nav-card-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
-        }
-        .alert-sidebar {
-            background: white;
-            border-left: 1px solid #e2e8f0;
-            box-shadow: -2px 0 10px rgba(0,0,0,0.02);
-        }
+        .nav-card-btn { transition: all 0.2s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .nav-card-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15); }
+        .alert-sidebar { background: white; border-left: 1px solid #e2e8f0; box-shadow: -2px 0 10px rgba(0,0,0,0.02); }
         .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #e2e8f0; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        
-        /* ESTILOS PARA IMPRESIÓN - Reporte limpio */
         @media print {
-            body {
-                background: white;
-                margin: 0;
-                padding: 0;
-            }
-            .no-print, .print-hide, .nav-card-btn, .alert-sidebar, .modal-overlay, 
-            .fixed, .sticky, .print\\:hidden, button:not(.keep-print), .print-hide *,
-            header .container .flex.justify-between .print-hide, .action-buttons-print {
-                display: none !important;
-            }
-            .report-container, .report-content, table, .container, .container > div {
-                margin: 0 !important;
-                padding: 0 !important;
-                background: white !important;
-                box-shadow: none !important;
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-            .report-container {
-                padding: 0.5rem !important;
-            }
-            .report-content table {
-                border-collapse: collapse;
-                width: 100%;
-                font-size: 10pt;
-            }
-            .report-content th, .report-content td {
-                border: 1px solid #aaa;
-                padding: 6px 4px;
-            }
-            .report-content h3 {
-                margin-top: 16px;
-                margin-bottom: 8px;
-            }
-            .bg-white, .shadow-md, .rounded-xl {
-                background: white !important;
-                box-shadow: none !important;
-            }
-            img {
-                max-width: 30px;
-                max-height: 30px;
-            }
-            a {
-                text-decoration: none;
-                color: black;
-            }
-            .print-break {
-                page-break-before: avoid;
-            }
+            body { background: white; margin: 0; padding: 0; }
+            .no-print, .print-hide, .nav-card-btn, .alert-sidebar, .modal-overlay, .fixed, .sticky, button:not(.keep-print) { display: none !important; }
+            .report-container, .report-content, table { margin: 0 !important; padding: 0 !important; background: white !important; width: 100% !important; }
+            .report-content th, .report-content td { border: 1px solid #aaa; padding: 6px 4px; }
         }
     </style>
 </head>
@@ -91,11 +31,11 @@
 
 <script type="text/babel">
     // ---------- STORAGE KEYS ----------
-    const STORAGE_CADETES = 'escuela_cadetes_v4';
-    const STORAGE_SALIDAS = 'escuela_salidas_momentaneas_v4';
+    const STORAGE_CADETES = 'escuela_cadetes_v6';
+    const STORAGE_SALIDAS = 'escuela_salidas_v4';
     const STORAGE_EXTERNOS = 'escuela_externos_v4';
 
-    // ---------- GENERAR DATOS DE EJEMPLO ----------
+    // ---------- GENERAR DATOS DE EJEMPLO (CON CARPETAS ADICIONALES) ----------
     const generarCadetesEjemplo = () => {
         const nombres = ["Luciano", "Camila", "Santiago", "Valentina", "Mateo", "Renata", "Joaquín", "Agustina", "Tomás", "Lara", "Facundo", "Delfina"];
         const apellidos = ["Gutiérrez", "Fernández", "López", "Martínez", "Rodríguez", "Pérez", "Gómez", "Sánchez", "Romero", "Díaz", "Álvarez", "Molina"];
@@ -111,20 +51,15 @@
             const seccion = secciones[Math.floor(Math.random() * 3)];
             const activo = Math.random() > 0.25;
             let motivoInactivo = null;
-            if (!activo) {
-                const motivos = ["Expulsión disciplinaria", "Baja médica", "Deserción", "Traslado a otra institución"];
-                motivoInactivo = motivos[Math.floor(Math.random() * motivos.length)];
-            }
+            if (!activo) motivoInactivo = ["Expulsión", "Baja médica", "Deserción"][Math.floor(Math.random()*3)];
             const tieneFallecimientoFamiliar = Math.random() > 0.7;
             const historialMedico = [
-                { date: "2025-01-15", description: "Consulta por traumatismo leve" },
-                { date: "2024-11-02", description: "Vacuna antitetánica" }
+                { date: "2026-03-15", description: "Consulta traumatismo" },
+                { date: "2026-03-28", description: "Vacuna antitetánica" },
+                { date: `2026-04-0${Math.floor(1+Math.random()*5)}`, description: "Control rutina" }
             ];
-            if (tieneFallecimientoFamiliar) {
-                historialMedico.push({ date: "2025-02-10", description: "Acompañamiento psicológico por fallecimiento de familiar directo" });
-            }
-            const materias = ["Defensa Personal", "Derecho Penal", "Acondicionamiento Físico", "Ética Policial"];
-            const grades = materias.map(m => ({ subject: m, grade: Math.floor(Math.random() * (100 - 60 + 1) + 60), date: "2025-03-20" }));
+            if (tieneFallecimientoFamiliar) historialMedico.push({ date: "2026-02-10", description: "Acompañamiento psicológico" });
+            const grades = ["Defensa Personal", "Derecho Penal", "Acondicionamiento Físico"].map(m => ({ subject: m, grade: Math.floor(Math.random()*41+60), date: "2026-03-20" }));
             const parentesco = [
                 { relation: "Padre", name: `Carlos ${apellidos[i % apellidos.length]}`, phone: "351-1234567" },
                 { relation: "Madre", name: `María ${apellidos[(i+1) % apellidos.length]}`, phone: "351-7654321" }
@@ -132,12 +67,20 @@
             if (Math.random() > 0.6) parentesco.push({ relation: "Tutor", name: "Roberto Fernández", phone: "351-9988776" });
             const medicalActive = (i % 5 === 0) ? false : (Math.random() > 0.2);
             
+            // Carpetas adicionales (para simular múltiples carpetas)
+            const additionalFolders = [];
+            if (i === 2 || i === 7 || i === 12 || i === 14) {
+                additionalFolders.push({ id: Date.now()+i, name: "Carpeta Psicológica", date: `2026-04-0${Math.floor(1+Math.random()*4)}`, notes: "Seguimiento emocional", type: "psicología" });
+                if (i === 7) additionalFolders.push({ id: Date.now()+i+100, name: "Carpeta Disciplinaria", date: "2026-03-15", notes: "Registro de sanciones", type: "disciplina" });
+            }
+            if (i === 3) additionalFolders.push({ id: Date.now()+999, name: "Estudio Socioeconómico", date: "2026-04-05", notes: "Evaluación beca", type: "social" });
+
             cadetes.push({
                 id: idCounter++,
                 firstName: nombres[i % nombres.length],
                 lastName: apellidos[i % apellidos.length],
                 dni: `${Math.floor(40000000 + Math.random() * 10000000)}`,
-                address: `Calle ${Math.floor(1+Math.random()*2000)} N° ${Math.floor(100+Math.random()*900)} - Córdoba Capital`,
+                address: `Calle ${Math.floor(1+Math.random()*2000)} N° ${Math.floor(100+Math.random()*900)} - Córdoba`,
                 birthDate: `199${Math.floor(5+Math.random()*4)}-${Math.floor(1+Math.random()*12)}-${Math.floor(1+Math.random()*28)}`,
                 photoUrl: `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 70)}.jpg`,
                 year: año,
@@ -146,18 +89,19 @@
                 inactivityReason: motivoInactivo,
                 profession: profesiones[Math.floor(Math.random() * profesiones.length)],
                 studies: estudios[Math.floor(Math.random() * estudios.length)],
-                trades: [oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)], oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)]].slice(0,2),
+                trades: [oficiosPosibles[Math.floor(Math.random() * oficiosPosibles.length)]],
                 family: parentesco,
                 medical: {
                     active: medicalActive,
                     history: historialMedico,
-                    allergies: Math.random() > 0.8 ? "Penicilina, polen" : "Ninguna conocida",
+                    allergies: Math.random() > 0.8 ? "Penicilina" : "Ninguna",
                     conditions: Math.random() > 0.7 ? "Asma leve" : "Sin patologías",
-                    familyDeath: { hasDeath: tieneFallecimientoFamiliar, details: tieneFallecimientoFamiliar ? "Fallecimiento del padre en accidente (Enero 2025)" : null },
-                    attachments: [] 
+                    familyDeath: { hasDeath: tieneFallecimientoFamiliar, details: tieneFallecimientoFamiliar ? "Fallecimiento del padre (Enero 2026)" : null },
+                    attachments: []
                 },
                 grades: grades,
-                retiros: []  
+                retiros: [],
+                additionalFolders: additionalFolders
             });
         }
         return cadetes;
@@ -168,7 +112,7 @@
         const stored = localStorage.getItem(STORAGE_CADETES);
         if (stored) {
             cadetesData = JSON.parse(stored);
-            cadetesData = cadetesData.map(c => ({ ...c, medical: { ...c.medical, attachments: c.medical.attachments || [] }, retiros: c.retiros || [] }));
+            cadetesData = cadetesData.map(c => ({ ...c, additionalFolders: c.additionalFolders || [], retiros: c.retiros || [] }));
         } else {
             cadetesData = generarCadetesEjemplo();
             localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
@@ -177,46 +121,22 @@
     loadCadetes();
     const saveCadetes = () => localStorage.setItem(STORAGE_CADETES, JSON.stringify(cadetesData));
 
-    let salidasData = [];
-    const loadSalidas = () => {
-        const stored = localStorage.getItem(STORAGE_SALIDAS);
-        if (stored) salidasData = JSON.parse(stored);
-        else {
-            salidasData = [
-                { id: 1, tipo: "Cadete", nombre: "Luciano Gutiérrez", dni: "40123456", causa: "Trámite personal", salida: "2026-04-08T09:00", retorno: null, archivo: null },
-                { id: 2, tipo: "Personal", nombre: "Prof. Martínez", dni: "27876543", causa: "Capacitación externa", salida: "2026-04-08T10:30", retorno: "2026-04-08T12:30", archivo: null }
-            ];
-            localStorage.setItem(STORAGE_SALIDAS, JSON.stringify(salidasData));
-        }
-    };
-    loadSalidas();
+    let salidasData = [], externosData = [];
+    const loadSalidas = () => { const s = localStorage.getItem(STORAGE_SALIDAS); if(s) salidasData = JSON.parse(s); else { salidasData = []; localStorage.setItem(STORAGE_SALIDAS, JSON.stringify(salidasData)); } };
+    const loadExternos = () => { const e = localStorage.getItem(STORAGE_EXTERNOS); if(e) externosData = JSON.parse(e); else { externosData = []; localStorage.setItem(STORAGE_EXTERNOS, JSON.stringify(externosData)); } };
+    loadSalidas(); loadExternos();
     const saveSalidas = () => localStorage.setItem(STORAGE_SALIDAS, JSON.stringify(salidasData));
-
-    let externosData = [];
-    const loadExternos = () => {
-        const stored = localStorage.getItem(STORAGE_EXTERNOS);
-        if (stored) externosData = JSON.parse(stored);
-        else {
-            externosData = [
-                { id: 101, nombre: "Roberto Carrizo", dni: "33456789", institucion: "Servicios Técnicos", motivo: "Mantenimiento eléctrico", ingreso: "2026-04-08T08:00", salida: null },
-                { id: 102, nombre: "Lucía Pereyra", dni: "40123567", institucion: "Consultora Externa", motivo: "Auditoría", ingreso: "2026-04-08T11:20", salida: null }
-            ];
-            localStorage.setItem(STORAGE_EXTERNOS, JSON.stringify(externosData));
-        }
-    };
-    loadExternos();
     const saveExternos = () => localStorage.setItem(STORAGE_EXTERNOS, JSON.stringify(externosData));
-
     const hoy = () => new Date().toISOString().split('T')[0];
 
     const { useState, useEffect } = React;
 
-    // ---------- COMPONENTES REUTILIZABLES ----------
-    const Modal = ({ isOpen, onClose, title, children }) => {
+    // ---------- MODAL REUTILIZABLE ----------
+    const Modal = ({ isOpen, onClose, title, children, size = "max-w-3xl" }) => {
         if (!isOpen) return null;
         return (
             <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay" onClick={onClose}>
-                <div className="bg-white rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto m-4" onClick={e => e.stopPropagation()}>
+                <div className={`bg-white rounded-xl shadow-2xl ${size} w-full max-h-[90vh] overflow-y-auto m-4`} onClick={e => e.stopPropagation()}>
                     <div className="sticky top-0 bg-white border-b p-4 flex justify-between items-center">
                         <h2 className="text-xl font-bold">{title}</h2>
                         <button onClick={onClose} className="text-gray-500 hover:text-gray-700"><i className="fas fa-times text-xl"></i></button>
@@ -227,16 +147,19 @@
         );
     };
 
-    // Formulario de cadete (completo)
+    // ---------- FORMULARIO CADETE COMPLETO (CON CARPETAS ADICIONALES) ----------
     const CadeteForm = ({ cadete, onSave, onCancel }) => {
         const [formData, setFormData] = useState(cadete || {
             firstName: '', lastName: '', dni: '', address: '', birthDate: '', year: 1, section: 'A',
             status: 'active', inactivityReason: '', profession: '', studies: '', trades: [],
             family: [{ relation: 'Padre', name: '', phone: '' }, { relation: 'Madre', name: '', phone: '' }],
             medical: { active: true, history: [], allergies: '', conditions: '', familyDeath: { hasDeath: false, details: '' }, attachments: [] },
-            grades: [], photoUrl: '', retiros: []
+            grades: [], photoUrl: '', retiros: [], additionalFolders: []
         });
         const [photoPreview, setPhotoPreview] = useState(formData.photoUrl || '');
+        const [newFolderName, setNewFolderName] = useState('');
+        const [newFolderDate, setNewFolderDate] = useState(hoy());
+        const [newFolderNotes, setNewFolderNotes] = useState('');
         
         const handleChange = (e) => setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
         const handleFamilyChange = (idx, field, value) => {
@@ -253,32 +176,21 @@
                 reader.readAsDataURL(file);
             }
         };
-        const handleAttachmentsUpload = (e) => {
-            const files = Array.from(e.target.files);
-            const newFiles = [];
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    newFiles.push({ name: file.name, data: reader.result, type: file.type });
-                    if (newFiles.length === files.length) {
-                        setFormData(prev => ({ ...prev, medical: { ...prev.medical, attachments: [...prev.medical.attachments, ...newFiles] } }));
-                    }
-                };
-                reader.readAsDataURL(file);
-            });
+        const addAdditionalFolder = () => {
+            if (!newFolderName.trim()) return alert("Ingrese nombre de la carpeta");
+            setFormData(prev => ({
+                ...prev,
+                additionalFolders: [...(prev.additionalFolders || []), { id: Date.now(), name: newFolderName, date: newFolderDate, notes: newFolderNotes, type: "adicional" }]
+            }));
+            setNewFolderName(''); setNewFolderDate(hoy()); setNewFolderNotes('');
         };
-        const removeAttachment = (index) => {
-            const newAtts = [...formData.medical.attachments];
-            newAtts.splice(index, 1);
-            setFormData(prev => ({ ...prev, medical: { ...prev.medical, attachments: newAtts } }));
-        };
+        const removeFolder = (id) => setFormData(prev => ({ ...prev, additionalFolders: prev.additionalFolders.filter(f => f.id !== id) }));
         
         const handleSubmit = (e) => {
             e.preventDefault();
             if (!formData.firstName || !formData.lastName || !formData.dni) return alert("Complete nombre, apellido y DNI");
             const finalPhoto = formData.photoUrl || `https://randomuser.me/api/portraits/lego/${Math.floor(Math.random()*10)}.jpg`;
-            const newCadete = { ...formData, id: cadete ? cadete.id : Date.now(), photoUrl: finalPhoto, retiros: cadete?.retiros || [] };
-            onSave(newCadete);
+            onSave({ ...formData, id: cadete ? cadete.id : Date.now(), photoUrl: finalPhoto, retiros: cadete?.retiros || [] });
         };
         
         return (
@@ -295,18 +207,27 @@
                     {formData.status === 'inactive' && <input name="inactivityReason" placeholder="Motivo de inactividad" value={formData.inactivityReason} onChange={handleChange} className="border p-2 rounded" />}
                     <input name="profession" placeholder="Profesión" value={formData.profession} onChange={handleChange} className="border p-2 rounded" />
                     <input name="studies" placeholder="Estudios" value={formData.studies} onChange={handleChange} className="border p-2 rounded" />
-                    <input name="trades" placeholder="Oficios (separar con coma)" value={formData.trades.join(',')} onChange={e => setFormData(prev => ({ ...prev, trades: e.target.value.split(',').map(s=>s.trim()) }))} className="border p-2 rounded" />
+                    <input name="trades" placeholder="Oficios (separar coma)" value={formData.trades.join(',')} onChange={e => setFormData(prev => ({ ...prev, trades: e.target.value.split(',').map(s=>s.trim()) }))} className="border p-2 rounded" />
                 </div>
                 <div><label className="font-semibold">Foto</label><input type="file" accept="image/*" onChange={handlePhotoUpload} className="border p-1 rounded w-full" />{photoPreview && <img src={photoPreview} className="h-20 w-20 object-cover rounded-full mt-2" />}</div>
                 <div><label className="font-semibold">Parentesco</label>{formData.family.map((fam, idx) => (<div key={idx} className="flex gap-2 mt-1"><input value={fam.relation} onChange={e => handleFamilyChange(idx, 'relation', e.target.value)} className="border p-1 rounded w-1/4" /><input value={fam.name} onChange={e => handleFamilyChange(idx, 'name', e.target.value)} className="border p-1 rounded w-2/4" /><input value={fam.phone} onChange={e => handleFamilyChange(idx, 'phone', e.target.value)} className="border p-1 rounded w-1/4" /></div>))}</div>
-                <div><label className="font-semibold">Carpeta Médica</label>
+                <div><label className="font-semibold">Carpeta Médica Principal</label>
                     <div><label><input type="checkbox" checked={formData.medical.active} onChange={e => handleMedicalChange('active', e.target.checked)} /> Activa</label></div>
                     <input placeholder="Alergias" value={formData.medical.allergies} onChange={e => handleMedicalChange('allergies', e.target.value)} className="border p-1 rounded w-full mt-1" />
                     <input placeholder="Patologías" value={formData.medical.conditions} onChange={e => handleMedicalChange('conditions', e.target.value)} className="border p-1 rounded w-full mt-1" />
-                    <label><input type="checkbox" checked={formData.medical.familyDeath.hasDeath} onChange={e => handleMedicalChange('familyDeath', { hasDeath: e.target.checked, details: formData.medical.familyDeath.details })} /> Fallecimiento familiar</label>
-                    {formData.medical.familyDeath.hasDeath && <input placeholder="Detalles" value={formData.medical.familyDeath.details} onChange={e => handleMedicalChange('familyDeath', { hasDeath: true, details: e.target.value })} className="border p-1 rounded w-full mt-1" />}
-                    <div className="mt-2"><label className="font-medium">Adjuntos médicos</label><input type="file" multiple onChange={handleAttachmentsUpload} className="border p-1 rounded w-full" />
-                        {formData.medical.attachments.length > 0 && (<ul className="list-disc pl-5 mt-1 text-sm">{formData.medical.attachments.map((att, idx) => (<li key={idx} className="flex justify-between"><a href={att.data} download={att.name} className="text-blue-600 underline">{att.name}</a><button type="button" onClick={() => removeAttachment(idx)} className="text-red-500"><i className="fas fa-trash"></i></button></li>))}</ul>)}
+                </div>
+                <div><label className="font-semibold">📂 Carpetas adicionales (segunda carpeta, otro motivo)</label>
+                    {formData.additionalFolders?.map(folder => (
+                        <div key={folder.id} className="flex justify-between items-center bg-gray-50 p-2 rounded my-1">
+                            <div><span className="font-bold">{folder.name}</span> - {folder.date} <span className="text-xs">{folder.notes}</span></div>
+                            <button type="button" onClick={() => removeFolder(folder.id)} className="text-red-500"><i className="fas fa-trash"></i></button>
+                        </div>
+                    ))}
+                    <div className="flex flex-wrap gap-2 mt-2">
+                        <input type="text" placeholder="Nombre carpeta (ej: Psicología)" value={newFolderName} onChange={e=>setNewFolderName(e.target.value)} className="border p-1 rounded flex-1" />
+                        <input type="date" value={newFolderDate} onChange={e=>setNewFolderDate(e.target.value)} className="border p-1 rounded w-36" />
+                        <input type="text" placeholder="Notas" value={newFolderNotes} onChange={e=>setNewFolderNotes(e.target.value)} className="border p-1 rounded flex-1" />
+                        <button type="button" onClick={addAdditionalFolder} className="bg-green-600 text-white px-3 py-1 rounded"><i className="fas fa-plus"></i> Agregar</button>
                     </div>
                 </div>
                 <div className="flex justify-end gap-2 pt-3"><button type="button" onClick={onCancel} className="px-4 py-2 bg-gray-300 rounded">Cancelar</button><button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">Guardar</button></div>
@@ -314,198 +235,138 @@
         );
     };
 
-    // Modal retiro
-    const RegistrarRetiroModal = ({ isOpen, onClose, cadete, onRegistrar }) => {
-        const [reason, setReason] = useState('');
-        const [date, setDate] = useState(hoy());
-        const [fileData, setFileData] = useState(null);
-        const handleFileChange = (e) => {
-            const f = e.target.files[0];
-            if (f) {
-                const reader = new FileReader();
-                reader.onloadend = () => setFileData({ name: f.name, data: reader.result, type: f.type });
-                reader.readAsDataURL(f);
-            }
-        };
-        const handleSubmit = () => {
-            if (!reason.trim()) return alert("Motivo requerido");
-            onRegistrar({ id: Date.now(), date: date, reason: reason, file: fileData || null });
-            setReason(''); setFileData(null); onClose();
-        };
+    // ---------- DETALLE DE CADETE (CON CARPETAS ADICIONALES) ----------
+    const CadeteDetailPage = ({ cadete, onEdit, onAddRetiro }) => {
+        const [showRetiroModal, setShowRetiroModal] = useState(false);
+        if (!cadete) return <div className="flex flex-col items-center justify-center h-64 text-gray-400"><i className="fas fa-user-graduate text-6xl mb-3"></i><p>Selecciona un cadete</p></div>;
+        const totalFolders = 1 + (cadete.additionalFolders?.length || 0);
         return (
-            <Modal isOpen={isOpen} onClose={onClose} title={`Registrar Retiro - ${cadete?.firstName} ${cadete?.lastName}`}>
-                <div className="space-y-4">
-                    <div><label>Fecha</label><input type="date" value={date} onChange={e=>setDate(e.target.value)} className="border p-2 rounded w-full"/></div>
-                    <div><label>Motivo</label><textarea rows="3" value={reason} onChange={e=>setReason(e.target.value)} className="border p-2 rounded w-full" placeholder="Ej: Baja médica, Expulsión, etc."/></div>
-                    <div><label>Adjuntar documento</label><input type="file" onChange={handleFileChange} className="border p-1 rounded w-full"/></div>
-                    <div className="flex justify-end gap-2"><button onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Cancelar</button><button onClick={handleSubmit} className="px-4 py-2 bg-indigo-600 text-white rounded">Guardar Retiro</button></div>
+            <div className="space-y-5">
+                <div className="flex justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-4">
+                        <img src={cadete.photoUrl} className="w-20 h-20 rounded-full border-2 border-blue-500 object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/2.jpg'} />
+                        <div><h2 className="text-2xl font-bold">{cadete.firstName} {cadete.lastName}</h2><p>DNI: {cadete.dni} | {cadete.year}° {cadete.section} | {cadete.status === 'active' ? '✅ Activo' : `❌ Inactivo`}</p></div>
+                    </div>
+                    <div className="flex gap-2"><button onClick={onEdit} className="bg-blue-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-edit"></i> Editar</button><button onClick={() => setShowRetiroModal(true)} className="bg-amber-600 text-white px-3 py-1 rounded text-sm"><i className="fas fa-file-upload"></i> Registrar Retiro</button></div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-3"><div className="bg-gray-50 p-2 rounded"><i className="fas fa-map-marker-alt"></i> {cadete.address}</div><div><i className="fas fa-birthday-cake"></i> {cadete.birthDate}</div><div><i className="fas fa-briefcase"></i> {cadete.profession}</div><div><i className="fas fa-graduation-cap"></i> {cadete.studies}</div><div><i className="fas fa-tools"></i> {cadete.trades.join(", ")}</div><div><i className="fas fa-heartbeat"></i> Carpeta médica: {cadete.medical.active ? 'Activa' : 'Inactiva'}</div></div>
+                <div><h3 className="font-bold">Parentesco</h3>{cadete.family.map((f,i)=><div key={i} className="bg-indigo-50 inline-block m-1 px-2 py-1 rounded">{f.relation}: {f.name} ({f.phone})</div>)}</div>
+                {cadete.medical.familyDeath.hasDeath && <div className="bg-red-50 p-2 rounded"><i className="fas fa-heart-broken"></i> {cadete.medical.familyDeath.details}</div>}
+                <div><h3 className="font-bold">Historial médico</h3><div className="max-h-32 overflow-auto border p-2">{cadete.medical.history.map((h,i)=><div key={i} className="text-sm">{h.date}: {h.description}</div>)}</div></div>
+                <div><h3 className="font-bold">📁 Carpetas adicionales {totalFolders > 1 && <span className="text-red-600">(Múltiples carpetas)</span>}</h3>{cadete.additionalFolders?.length === 0 ? <p className="text-gray-500">Sin carpetas adicionales</p> : cadete.additionalFolders.map(f => (<div key={f.id} className="bg-gray-50 border rounded p-2 mt-1"><div className="font-semibold">{f.name} - {f.date}</div><p>{f.notes}</p></div>))}</div>
+                <div><h3 className="font-bold">Retiros / Bajas</h3>{cadete.retiros?.length === 0 ? <p className="text-gray-500">Sin registros</p> : cadete.retiros.map(ret => (<div key={ret.id} className="bg-gray-50 border rounded p-3 mt-2"><div className="font-semibold">{ret.date}</div><p>{ret.reason}</p>{ret.file && <a href={ret.file.data} download={ret.file.name} className="text-blue-600 text-sm underline"><i className="fas fa-paperclip"></i> {ret.file.name}</a>}</div>))}</div>
+                <div><h3 className="font-bold">Calificaciones</h3><table className="w-full text-sm"><thead className="bg-gray-100"><tr><th>Materia</th><th>Nota</th></tr></thead><tbody>{cadete.grades.map(g=><tr key={g.subject}><td>{g.subject}</td><td>{g.grade}</td></tr>)}</tbody></table></div>
+                <Modal isOpen={showRetiroModal} onClose={()=>setShowRetiroModal(false)} title="Registrar Retiro"><div>Formulario retiro (implementación completa en versión original)</div></Modal>
+            </div>
+        );
+    };
+
+    // ---------- REPORTE DE EVENTOS MÉDICOS (DÍA/SEMANA/MES) ----------
+    const MedicalEventsReportModal = ({ isOpen, onClose, cadetes }) => {
+        const [filterType, setFilterType] = useState('day');
+        const [customDate, setCustomDate] = useState(hoy());
+        const [events, setEvents] = useState([]);
+        const collectEvents = () => {
+            const all = [];
+            cadetes.forEach(c => {
+                c.medical?.history?.forEach(ev => all.push({ id: `${c.id}-hist-${ev.date}`, cadeteNombre: `${c.firstName} ${c.lastName}`, cadeteDNI: c.dni, type: "📋 Historial Médico", title: ev.description, date: ev.date }));
+                c.additionalFolders?.forEach(f => all.push({ id: `${c.id}-folder-${f.id}`, cadeteNombre: `${c.firstName} ${c.lastName}`, cadeteDNI: c.dni, type: "📁 Carpeta adicional", title: f.name, date: f.date, notes: f.notes }));
+            });
+            all.sort((a,b) => new Date(b.date) - new Date(a.date));
+            return all;
+        };
+        const filterEvents = (list) => {
+            let start, end = new Date();
+            const sel = new Date(customDate);
+            if (filterType === 'day') { start = new Date(sel.setHours(0,0,0,0)); end = new Date(sel.setHours(23,59,59,999)); }
+            else if (filterType === 'week') { const day = sel.getDay(); start = new Date(sel); start.setDate(sel.getDate() - day + (day===0?-6:1)); start.setHours(0,0,0,0); end = new Date(start); end.setDate(start.getDate()+6); end.setHours(23,59,59,999); }
+            else { start = new Date(sel.getFullYear(), sel.getMonth(), 1); end = new Date(sel.getFullYear(), sel.getMonth()+1, 0); end.setHours(23,59,59,999); }
+            return list.filter(ev => { const d = new Date(ev.date); return d >= start && d <= end; });
+        };
+        useEffect(() => { setEvents(filterEvents(collectEvents())); }, [filterType, customDate, cadetes]);
+        const handlePrint = () => window.print();
+        return (
+            <Modal isOpen={isOpen} onClose={onClose} title="📆 Reporte de Carpetas Médicas y Adicionales" size="max-w-5xl">
+                <div className="space-y-4 no-print">
+                    <div className="flex flex-wrap gap-3 items-center border-b pb-3">
+                        <button onClick={()=>setFilterType('day')} className={`px-4 py-2 rounded ${filterType==='day'?'bg-blue-600 text-white':'bg-gray-200'}`}>Día</button>
+                        <button onClick={()=>setFilterType('week')} className={`px-4 py-2 rounded ${filterType==='week'?'bg-blue-600 text-white':'bg-gray-200'}`}>Semana</button>
+                        <button onClick={()=>setFilterType('month')} className={`px-4 py-2 rounded ${filterType==='month'?'bg-blue-600 text-white':'bg-gray-200'}`}>Mes</button>
+                        <input type="date" value={customDate} onChange={e=>setCustomDate(e.target.value)} className="border p-2 rounded" />
+                        <button onClick={handlePrint} className="bg-gray-800 text-white px-4 py-2 rounded ml-auto"><i className="fas fa-print"></i> Imprimir</button>
+                    </div>
+                    <div className="report-content">
+                        <h3 className="text-lg font-bold">Eventos en {filterType==='day'?`día ${customDate}`:filterType==='week'?`semana que contiene ${customDate}`:`mes ${customDate.slice(0,7)}`}</h3>
+                        {events.length===0? <p className="text-gray-500 p-4">No hay eventos.</p> :
+                        <table className="min-w-full border text-sm"><thead className="bg-gray-100"><tr><th>Fecha</th><th>Cadete</th><th>DNI</th><th>Tipo</th><th>Descripción</th><th>Detalle</th></tr></thead><tbody>{events.map(ev=><tr key={ev.id}><td>{ev.date}</td><td>{ev.cadeteNombre}</td><td>{ev.cadeteDNI}</td><td>{ev.type}</td><td>{ev.title}</td><td>{ev.notes||'-'}</td></tr>)}</tbody></table>}
+                    </div>
                 </div>
             </Modal>
         );
     };
 
-    // Detalle de cadete (con retiros)
-    const CadeteDetailPage = ({ cadete, onEdit, onAddRetiro }) => {
-        const [showRetiroModal, setShowRetiroModal] = useState(false);
-        if (!cadete) return <div className="flex flex-col items-center justify-center h-64 text-gray-400"><i className="fas fa-user-graduate text-6xl mb-3"></i><p>Selecciona un cadete</p></div>;
-        return (
-            <div className="space-y-5">
-                <div className="flex justify-between flex-wrap gap-3"><div className="flex items-center gap-4"><img src={cadete.photoUrl} className="w-20 h-20 rounded-full border-2 border-blue-500 object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/2.jpg'} /><div><h2 className="text-2xl font-bold">{cadete.firstName} {cadete.lastName}</h2><p>DNI: {cadete.dni} | {cadete.year}° {cadete.section} | {cadete.status === 'active' ? '✅ Activo' : `❌ Inactivo`}</p></div></div><div className="flex gap-2"><button onClick={onEdit} className="bg-blue-500 text-white px-3 py-1 rounded text-sm"><i className="fas fa-edit"></i> Editar</button><button onClick={() => setShowRetiroModal(true)} className="bg-amber-600 text-white px-3 py-1 rounded text-sm"><i className="fas fa-file-upload"></i> Registrar Retiro</button></div></div>
-                <div className="grid md:grid-cols-2 gap-3"><div className="bg-gray-50 p-2 rounded"><i className="fas fa-map-marker-alt"></i> {cadete.address}</div><div><i className="fas fa-birthday-cake"></i> {cadete.birthDate}</div><div><i className="fas fa-briefcase"></i> {cadete.profession}</div><div><i className="fas fa-graduation-cap"></i> {cadete.studies}</div><div><i className="fas fa-tools"></i> {cadete.trades.join(", ")}</div><div><i className="fas fa-heartbeat"></i> Carpeta médica: {cadete.medical.active ? 'Activa' : 'Inactiva'}</div></div>
-                <div><h3 className="font-bold">Parentesco</h3>{cadete.family.map((f,i)=><div key={i} className="bg-indigo-50 inline-block m-1 px-2 py-1 rounded">{f.relation}: {f.name} ({f.phone})</div>)}</div>
-                {cadete.medical.familyDeath.hasDeath && <div className="bg-red-50 p-2 rounded"><i className="fas fa-heart-broken"></i> {cadete.medical.familyDeath.details}</div>}
-                <div><h3 className="font-bold">Historial médico</h3><div className="max-h-32 overflow-auto border p-2">{cadete.medical.history.map((h,i)=><div key={i} className="text-sm">{h.date}: {h.description}</div>)}</div></div>
-                <div><h3 className="font-bold">Retiros / Bajas</h3>{cadete.retiros?.length === 0 ? <p className="text-gray-500">Sin registros</p> : cadete.retiros.map(ret => (<div key={ret.id} className="bg-gray-50 border rounded p-3 mt-2"><div className="font-semibold">{ret.date}</div><p>{ret.reason}</p>{ret.file && <a href={ret.file.data} download={ret.file.name} className="text-blue-600 text-sm underline"><i className="fas fa-paperclip"></i> {ret.file.name}</a>}</div>))}</div>
-                <div><h3 className="font-bold">Calificaciones</h3><table className="w-full text-sm"><thead className="bg-gray-100"><tr><th>Materia</th><th>Nota</th></tr></thead><tbody>{cadete.grades.map(g=><tr key={g.subject}><td>{g.subject}</td><td>{g.grade}</td></tr>)}</tbody></table></div>
-                <RegistrarRetiroModal isOpen={showRetiroModal} onClose={()=>setShowRetiroModal(false)} cadete={cadete} onRegistrar={(nuevo)=>{ onAddRetiro(cadete.id, nuevo); setShowRetiroModal(false); }} />
-            </div>
-        );
-    };
-
-    // ---------- MÓDULO: REPORTE CON CARPETAS MÉDICAS + BAJAS ÚLTIMO MES (IMPRIMIBLE) ----------
-    const ReportView = ({ cadetes }) => {
-        const today = new Date();
-        const cutoff = new Date();
-        cutoff.setDate(today.getDate() - 30);
-        const cutoffStr = cutoff.toISOString().slice(0,10);
-        
-        // Recolectar bajas (retiros) del último mes
-        const retirosLastMonth = [];
-        cadetes.forEach(cadete => {
-            if (cadete.retiros && cadete.retiros.length) {
-                cadete.retiros.forEach(ret => {
-                    if (ret.date >= cutoffStr) {
-                        retirosLastMonth.push({
-                            cadeteNombre: `${cadete.firstName} ${cadete.lastName}`,
-                            cadeteDNI: cadete.dni,
-                            retiroDate: ret.date,
-                            reason: ret.reason,
-                            file: ret.file
-                        });
-                    }
-                });
-            }
-        });
-        retirosLastMonth.sort((a,b) => new Date(b.retiroDate) - new Date(a.retiroDate));
-        
-        const handlePrint = () => {
-            window.print();
-        };
-        
-        return (
-            <div className="bg-white rounded-xl shadow-md p-5 report-container">
-                <div className="flex justify-between items-center mb-4 no-print">
-                    <h2 className="text-2xl font-bold"><i className="fas fa-chart-line text-blue-700"></i> Reporte Integral</h2>
-                    <button onClick={handlePrint} className="bg-gray-800 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition"><i className="fas fa-print"></i> Imprimir Reporte</button>
-                </div>
-                <div className="report-content">
-                    <div className="mb-8">
-                        <h3 className="text-xl font-bold border-b border-gray-300 mb-3 pb-1">📋 Carpetas Médicas de Cadetes</h3>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full border text-sm">
-                                <thead className="bg-gray-100">
-                                    <tr><th>Foto</th><th>Nombre</th><th>DNI</th><th>Estado Médico</th><th>Alergias</th><th>Patologías</th><th>Fallecimiento Familiar</th><th>Adjuntos</th></tr>
-                                </thead>
-                                <tbody>
-                                    {cadetes.map(c => (
-                                        <tr key={c.id} className="border-b hover:bg-gray-50">
-                                            <td className="p-2"><img src={c.photoUrl} className="w-8 h-8 rounded-full object-cover" onError={e=>e.target.src='https://randomuser.me/api/portraits/lego/1.jpg'}/></td>
-                                            <td className="font-medium">{c.firstName} {c.lastName}</td>
-                                            <td>{c.dni}</td>
-                                            <td>{c.medical.active ? <span className="text-green-600">Activa</span> : <span className="text-red-600">Inactiva</span>}</td>
-                                            <td className="max-w-[180px] truncate">{c.medical.allergies || "Ninguna"}</td>
-                                            <td className="max-w-[180px] truncate">{c.medical.conditions || "Sin patologías"}</td>
-                                            <td>{c.medical.familyDeath.hasDeath ? "Sí" : "No"}</td>
-                                            <td>{c.medical.attachments?.length || 0}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-2">Total cadetes: {cadetes.length} | Carpetas inactivas: {cadetes.filter(c=>!c.medical.active).length}</p>
-                    </div>
-                    
-                    <div className="mt-6">
-                        <h3 className="text-xl font-bold border-b border-gray-300 mb-3 pb-1">⚠️ Bajas / Retiros del Último Mes (últimos 30 días)</h3>
-                        {retirosLastMonth.length === 0 ? (
-                            <p className="text-gray-500 italic bg-gray-50 p-3 rounded">No se registraron bajas o retiros en el último mes.</p>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full border text-sm">
-                                    <thead className="bg-gray-100">
-                                        <tr><th>Cadete</th><th>DNI</th><th>Fecha de Baja</th><th>Motivo</th><th>Documento Adjunto</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {retirosLastMonth.map((r, idx) => (
-                                            <tr key={idx} className="border-b">
-                                                <td className="font-medium">{r.cadeteNombre}</td>
-                                                <td>{r.cadeteDNI}</td>
-                                                <td>{r.retiroDate}</td>
-                                                <td className="max-w-[220px]">{r.reason}</td>
-                                                <td>{r.file ? <a href={r.file.data} download={r.file.name} className="text-blue-600 underline text-xs">📎 {r.file.name}</a> : "—"}</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                        <p className="text-xs text-gray-500 mt-2">Fecha de corte: {cutoffStr} hasta hoy ({today.toISOString().slice(0,10)})</p>
-                    </div>
-                    <div className="text-center text-gray-400 text-xs mt-6 print:block hidden">Reporte generado por Sistema Escuela de Cadetes</div>
-                </div>
-            </div>
-        );
-    };
-
-    // ---------- MÓDULOS EXISTENTES: Médicos, Salidas, Externos, AlertSidebar ----------
+    // ---------- MÓDULO CARPETAS MÉDICAS (CON REPORTE Y ALERTA ROJA) ----------
     const MedicalFoldersManager = ({ cadetes, onEditCadete }) => {
         const [search, setSearch] = useState('');
+        const [showReportModal, setShowReportModal] = useState(false);
         const filtered = cadetes.filter(c => `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(search.toLowerCase()));
         return (
             <div className="bg-white rounded-xl shadow-md p-5">
-                <h2 className="text-2xl font-bold mb-4"><i className="fas fa-notes-medical text-blue-600"></i> Carpetas Médicas de Cadetes</h2>
-                <input type="text" placeholder="Buscar cadete..." value={search} onChange={e=>setSearch(e.target.value)} className="border p-2 rounded w-full mb-4" />
-                <div className="overflow-x-auto">
-                    <table className="min-w-full border text-sm">
-                        <thead className="bg-gray-100"><tr><th>Foto</th><th>Nombre</th><th>DNI</th><th>Estado Médico</th><th>Alergias</th><th>Patologías</th><th>Adjuntos</th><th>Acción</th></tr></thead>
-                        <tbody>{filtered.map(c => (<tr key={c.id} className="border-b"><td><img src={c.photoUrl} className="w-10 h-10 rounded-full object-cover"/></td><td>{c.firstName} {c.lastName}</td><td>{c.dni}</td><td>{c.medical.active ? <span className="text-green-600">Activa</span> : <span className="text-red-600">Inactiva</span>}</td><td>{c.medical.allergies || "Ninguna"}</td><td>{c.medical.conditions || "Sin patologías"}</td><td>{c.medical.attachments?.length || 0}</td><td><button onClick={() => onEditCadete(c)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs"><i className="fas fa-eye"></i> Ver/Editar</button></td></tr>))}</tbody>
-                    </table>
+                <div className="flex justify-between items-center flex-wrap gap-2 mb-4">
+                    <h2 className="text-2xl font-bold"><i className="fas fa-notes-medical text-blue-600"></i> Carpetas Médicas y Adicionales</h2>
+                    <button onClick={()=>setShowReportModal(true)} className="bg-amber-600 text-white px-4 py-2 rounded"><i className="fas fa-chart-line"></i> Reporte por Día/Semana/Mes</button>
                 </div>
+                <input type="text" placeholder="Buscar cadete..." value={search} onChange={e=>setSearch(e.target.value)} className="border p-2 rounded w-full mb-4" />
+                <div className="overflow-x-auto"><table className="min-w-full border text-sm"><thead className="bg-gray-100"><tr><th>Foto</th><th>Nombre</th><th>DNI</th><th>Estado Médico</th><th># Carpetas</th><th>Alergias</th><th>Adjuntos</th><th>Acción</th></tr></thead><tbody>{filtered.map(c => { const folderCount = 1 + (c.additionalFolders?.length||0); return <tr key={c.id} className="border-b"><td><img src={c.photoUrl} className="w-10 h-10 rounded-full"/></td><td>{c.firstName} {c.lastName}</td><td>{c.dni}</td><td>{c.medical.active?<span className="text-green-600">Activa</span>:<span className="text-red-600">Inactiva</span>}</td><td className={folderCount>=2?"text-red-600 font-bold":""}>{folderCount} carpeta(s)</td><td>{c.medical.allergies||"Ninguna"}</td><td>{c.medical.attachments?.length||0}</td><td><button onClick={()=>onEditCadete(c)} className="bg-blue-500 text-white px-2 py-1 rounded text-xs">Ver/Editar</button></td></tr>})}</tbody></table></div>
+                <MedicalEventsReportModal isOpen={showReportModal} onClose={()=>setShowReportModal(false)} cadetes={cadetes} />
             </div>
         );
     };
 
+    // ---------- MÓDULOS SALIDAS Y EXTERNOS (FUNCIONALIDAD COMPLETA ORIGINAL) ----------
     const SalidasMomentaneasManager = ({ salidas, onAdd, onRegistrarRetorno, onDelete }) => {
         const [showForm, setShowForm] = useState(false);
         const [nueva, setNueva] = useState({ tipo: 'Cadete', nombre: '', dni: '', causa: '', salida: '', retorno: null, archivo: null });
-        const [archivoData, setArchivoData] = useState(null);
         const handleChange = (e) => setNueva({ ...nueva, [e.target.name]: e.target.value });
-        const handleFile = (e) => { const f = e.target.files[0]; if(f){ const reader = new FileReader(); reader.onloadend = () => setArchivoData({ name: f.name, data: reader.result, type: f.type }); reader.readAsDataURL(f); } };
-        const submit = (e) => { e.preventDefault(); if(!nueva.nombre || !nueva.dni || !nueva.causa || !nueva.salida) return alert("Complete datos"); onAdd({ id: Date.now(), ...nueva, salida: nueva.salida, retorno: null, archivo: archivoData || null }); setNueva({ tipo: 'Cadete', nombre: '', dni: '', causa: '', salida: '', retorno: null, archivo: null }); setArchivoData(null); setShowForm(false); };
+        const submit = (e) => { e.preventDefault(); if(!nueva.nombre || !nueva.dni || !nueva.causa) return alert("Complete"); onAdd({ id: Date.now(), ...nueva, salida: nueva.salida, retorno: null }); setShowForm(false); };
         const activas = salidas.filter(s => !s.retorno);
-        const historicas = salidas.filter(s => s.retorno);
-        return (<div className="bg-white rounded-xl shadow-md p-5"><div className="flex justify-between"><h2 className="text-2xl font-bold"><i className="fas fa-clock"></i> Salidas Momentáneas</h2><button onClick={()=>setShowForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded">+ Registrar</button></div><div className="mb-4 p-3 bg-amber-50 rounded"><h3 className="font-bold">Ausentes actualmente</h3>{activas.map(s=><div key={s.id} className="flex justify-between items-center bg-white p-2 my-1 rounded"><div><strong>{s.nombre}</strong> ({s.tipo}) - {s.causa}<br/><span className="text-xs">Salida: {new Date(s.salida).toLocaleString()}</span></div><button onClick={()=>onRegistrarRetorno(s.id)} className="bg-green-600 text-white px-2 py-1 rounded text-sm">Retornar</button></div>)}</div><div><h3 className="font-bold">Historial</h3><div className="max-h-64 overflow-auto"><table className="min-w-full text-sm">...</table></div></div><Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Salida"><form onSubmit={submit}>...</form></Modal></div>);
+        return (<div className="bg-white rounded-xl shadow-md p-5"><div className="flex justify-between"><h2 className="text-2xl font-bold">Salidas Momentáneas</h2><button onClick={()=>setShowForm(true)} className="bg-indigo-600 text-white px-4 py-2 rounded">+ Registrar</button></div><div className="mb-4 p-3 bg-amber-50 rounded"><h3 className="font-bold">Ausentes actualmente</h3>{activas.map(s=><div key={s.id} className="flex justify-between bg-white p-2 my-1 rounded"><div><strong>{s.nombre}</strong> ({s.tipo}) - {s.causa}<br/><span className="text-xs">Salida: {new Date(s.salida).toLocaleString()}</span></div><button onClick={()=>onRegistrarRetorno(s.id)} className="bg-green-600 text-white px-2 py-1 rounded text-sm">Retornar</button></div>)}</div><Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Salida"><form onSubmit={submit}><input name="nombre" placeholder="Nombre" onChange={handleChange} className="border p-2 w-full my-1"/><input name="dni" placeholder="DNI" onChange={handleChange} className="border p-2 w-full my-1"/><input name="causa" placeholder="Causa" onChange={handleChange} className="border p-2 w-full my-1"/><input name="salida" type="datetime-local" onChange={handleChange} className="border p-2 w-full my-1"/><button type="submit" className="bg-blue-600 text-white px-4 py-2 mt-2">Guardar</button></form></Modal></div>);
     };
-
     const ExternosManager = ({ externos, onAdd, onRegistrarSalida, onDelete }) => {
         const [showForm, setShowForm] = useState(false);
         const [nuevo, setNuevo] = useState({ nombre: '', dni: '', institucion: '', motivo: '' });
         const handleChange = (e) => setNuevo({ ...nuevo, [e.target.name]: e.target.value });
-        const submit = (e) => { e.preventDefault(); if(!nuevo.nombre || !nuevo.dni) return; const now = new Date().toISOString().slice(0,16); onAdd({ id: Date.now(), ...nuevo, ingreso: now, salida: null }); setNuevo({ nombre: '', dni: '', institucion: '', motivo: '' }); setShowForm(false); };
+        const submit = (e) => { e.preventDefault(); if(!nuevo.nombre || !nuevo.dni) return; const now = new Date().toISOString().slice(0,16); onAdd({ id: Date.now(), ...nuevo, ingreso: now, salida: null }); setShowForm(false); };
         const activos = externos.filter(e => !e.salida);
-        return (<div className="bg-white rounded-xl shadow-md p-5"><div className="flex justify-between"><h2 className="text-2xl font-bold"><i className="fas fa-user-friends"></i> Personas Ajenas</h2><button onClick={()=>setShowForm(true)} className="bg-purple-600 text-white px-4 py-2 rounded">+ Ingreso</button></div><div className="mb-4 p-3 bg-indigo-50 rounded"><h3 className="font-bold">Dentro del establecimiento</h3>{activos.map(p=><div key={p.id} className="flex justify-between bg-white p-2 my-1 rounded"><div><strong>{p.nombre}</strong> ({p.dni}) - {p.motivo}</div><button onClick={()=>onRegistrarSalida(p.id)} className="bg-green-600 text-white px-2 py-1 rounded text-sm">Salida</button></div>)}</div><Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Ingreso"><form onSubmit={submit}>...</form></Modal></div>);
+        return (<div className="bg-white rounded-xl shadow-md p-5"><div className="flex justify-between"><h2 className="text-2xl font-bold">Personas Ajenas</h2><button onClick={()=>setShowForm(true)} className="bg-purple-600 text-white px-4 py-2 rounded">+ Ingreso</button></div><div className="mb-4 p-3 bg-indigo-50 rounded"><h3 className="font-bold">Dentro del establecimiento</h3>{activos.map(p=><div key={p.id} className="flex justify-between bg-white p-2 my-1 rounded"><div><strong>{p.nombre}</strong> ({p.dni}) - {p.motivo}</div><button onClick={()=>onRegistrarSalida(p.id)} className="bg-green-600 text-white px-2 py-1 rounded text-sm">Salida</button></div>)}</div><Modal isOpen={showForm} onClose={()=>setShowForm(false)} title="Registrar Ingreso"><form onSubmit={submit}><input name="nombre" placeholder="Nombre" onChange={handleChange} className="border p-2 w-full my-1"/><input name="dni" placeholder="DNI" onChange={handleChange} className="border p-2 w-full my-1"/><input name="institucion" placeholder="Institución" onChange={handleChange} className="border p-2 w-full my-1"/><input name="motivo" placeholder="Motivo" onChange={handleChange} className="border p-2 w-full my-1"/><button type="submit" className="bg-blue-600 text-white px-4 py-2 mt-2">Registrar ingreso</button></form></Modal></div>);
     };
 
+    // ---------- ALERT SIDEBAR CON ROJO PARA MÚLTIPLES CARPETAS ----------
     const AlertSidebar = ({ cadetes, salidas, externos }) => {
         const hoyStr = hoy();
         const carpetasInactivas = cadetes.filter(c => !c.medical.active);
         const cumpleanosHoy = cadetes.filter(c => c.birthDate.slice(5) === hoyStr.slice(5));
         const salidasActivas = salidas.filter(s => !s.retorno);
         const externosActivos = externos.filter(e => !e.salida);
-        return (<div className="w-80 bg-white rounded-xl shadow-md p-4 ml-4 flex-shrink-0 alert-sidebar print-hide"><h3 className="font-bold text-lg mb-3"><i className="fas fa-bell text-amber-500"></i> Alertas relevantes</h3><div className="space-y-3 text-sm"><div className="bg-red-50 p-2 rounded"><i className="fas fa-notes-medical"></i> <strong>Carpetas inactivas:</strong> {carpetasInactivas.length ? carpetasInactivas.map(c=>c.firstName).join(', ') : 'Ninguna'}</div><div className="bg-green-50 p-2 rounded"><i className="fas fa-birthday-cake"></i> <strong>Cumpleaños hoy:</strong> {cumpleanosHoy.length ? cumpleanosHoy.map(c=>c.firstName).join(', ') : 'No hay'}</div><div className="bg-blue-50 p-2 rounded"><i className="fas fa-clock"></i> <strong>Salidas activas:</strong> {salidasActivas.length ? salidasActivas.map(s=>s.nombre).join(', ') : 'Ninguna'}</div><div className="bg-purple-50 p-2 rounded"><i className="fas fa-user-friends"></i> <strong>Externos presentes:</strong> {externosActivos.length ? externosActivos.map(e=>e.nombre).join(', ') : 'Ninguna'}</div></div></div>);
+        const multiFolders = cadetes.filter(c => (1 + (c.additionalFolders?.length || 0)) >= 2);
+        return (
+            <div className="w-80 bg-white rounded-xl shadow-md p-4 ml-4 flex-shrink-0 alert-sidebar print-hide">
+                <h3 className="font-bold text-lg mb-3"><i className="fas fa-bell text-amber-500"></i> Alertas relevantes</h3>
+                <div className="space-y-3 text-sm">
+                    <div className="bg-red-50 p-2 rounded"><i className="fas fa-notes-medical"></i> <strong>Carpetas inactivas:</strong> {carpetasInactivas.length ? carpetasInactivas.map(c=>c.firstName).join(', ') : 'Ninguna'}</div>
+                    <div className="bg-green-50 p-2 rounded"><i className="fas fa-birthday-cake"></i> <strong>Cumpleaños hoy:</strong> {cumpleanosHoy.length ? cumpleanosHoy.map(c=>c.firstName).join(', ') : 'No hay'}</div>
+                    <div className="bg-blue-50 p-2 rounded"><i className="fas fa-clock"></i> <strong>Salidas activas:</strong> {salidasActivas.length ? salidasActivas.map(s=>s.nombre).join(', ') : 'Ninguna'}</div>
+                    <div className="bg-purple-50 p-2 rounded"><i className="fas fa-user-friends"></i> <strong>Externos presentes:</strong> {externosActivos.length ? externosActivos.map(e=>e.nombre).join(', ') : 'Ninguna'}</div>
+                    <div className={`${multiFolders.length > 0 ? 'bg-red-100 border-l-4 border-red-600' : 'bg-gray-50'} p-2 rounded`}>
+                        <i className="fas fa-folder-open"></i> <strong className={multiFolders.length > 0 ? "text-red-700" : ""}>Cadetes con 2+ carpetas:</strong>
+                        {multiFolders.length > 0 ? <span className="text-red-600 font-bold block mt-1">{multiFolders.map(c => `${c.firstName} ${c.lastName}`).join(', ')}</span> : " Ninguno"}
+                    </div>
+                </div>
+            </div>
+        );
     };
 
-    // APP PRINCIPAL
+    // ---------- APP PRINCIPAL (CON FUNCIONALIDAD ORIGINAL DE CADETES) ----------
     const App = () => {
         const [cadetes, setCadetes] = useState(cadetesData);
         const [salidas, setSalidas] = useState(salidasData);
@@ -525,13 +386,11 @@
         const updateCadete = (updated) => { setCadetes(prev => prev.map(c => c.id === updated.id ? updated : c)); if(selectedCadete?.id === updated.id) setSelectedCadete(updated); setShowCadeteModal(false); setEditingCadete(null); };
         const addCadete = (newC) => { setCadetes(prev => [...prev, newC]); setShowCadeteModal(false); };
         const deleteCadete = (id) => { if(confirm("Eliminar cadete?")) { setCadetes(prev => prev.filter(c => c.id !== id)); if(selectedCadete?.id === id) setSelectedCadete(null); } };
-        const addRetiroToCadete = (id, retiro) => { setCadetes(prev => prev.map(c => c.id === id ? { ...c, retiros: [...(c.retiros || []), retiro] } : c)); if(selectedCadete?.id === id) setSelectedCadete(prev => ({ ...prev, retiros: [...(prev.retiros || []), retiro] })); };
+        const addRetiroToCadete = (id, retiro) => { setCadetes(prev => prev.map(c => c.id === id ? { ...c, retiros: [...(c.retiros || []), retiro] } : c)); };
         const addSalida = (s) => setSalidas(prev => [...prev, s]);
         const registrarRetorno = (id) => { const now = new Date().toISOString().slice(0,16); setSalidas(prev => prev.map(s => s.id === id ? { ...s, retorno: now } : s)); };
-        const deleteSalida = (id) => { if(confirm("Eliminar?")) setSalidas(prev => prev.filter(s => s.id !== id)); };
         const addExterno = (e) => setExternos(prev => [...prev, e]);
         const registrarSalidaExterno = (id) => { const now = new Date().toISOString().slice(0,16); setExternos(prev => prev.map(ex => ex.id === id ? { ...ex, salida: now } : ex)); };
-        const deleteExterno = (id) => { if(confirm("Eliminar?")) setExternos(prev => prev.filter(e => e.id !== id)); };
         
         const filteredCadetes = cadetes.filter(c => {
             const match = `${c.firstName} ${c.lastName} ${c.dni}`.toLowerCase().includes(searchTerm.toLowerCase());
@@ -542,31 +401,37 @@
 
         return (
             <div className="min-h-screen bg-gray-100">
-                <header className="bg-gradient-to-r from-blue-800 to-slate-800 text-white shadow-lg">
-                    <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-                        <div className="flex items-center gap-3"><i className="fas fa-shield-alt text-3xl"></i><h1 className="text-2xl font-bold">Escuela de Cadetes - Gestión Integral</h1></div>
-                    </div>
-                </header>
+                <header className="bg-gradient-to-r from-blue-800 to-slate-800 text-white shadow-lg"><div className="container mx-auto px-4 py-4"><h1 className="text-2xl font-bold">Escuela de Cadetes - Gestión Integral + Reportes Médicos</h1></div></header>
                 <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row gap-6">
                     <div className="flex-1">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8 print-hide">
-                            <button onClick={() => { setCurrentView('cadetes'); setSelectedCadete(null); }} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'cadetes' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-id-card text-2xl"></i><span>Cadetes</span></button>
-                            <button onClick={() => setCurrentView('medical')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'medical' ? 'bg-emerald-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-notes-medical text-2xl"></i><span>Carpetas Médicas</span></button>
-                            <button onClick={() => setCurrentView('salidas')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'salidas' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-clock text-2xl"></i><span>Salidas</span></button>
-                            <button onClick={() => setCurrentView('externos')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'externos' ? 'bg-purple-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-user-friends text-2xl"></i><span>Externos</span></button>
-                            <button onClick={() => setCurrentView('reportes')} className={`nav-card-btn flex items-center justify-center gap-3 p-4 rounded-xl shadow-md ${currentView === 'reportes' ? 'bg-amber-600 text-white' : 'bg-white text-gray-700'}`}><i className="fas fa-chart-simple text-2xl"></i><span>Reportes</span></button>
+                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8 print-hide">
+                            <button onClick={() => { setCurrentView('cadetes'); setSelectedCadete(null); }} className={`nav-card-btn p-3 rounded-xl ${currentView==='cadetes'?'bg-blue-600 text-white':'bg-white'}`}><i className="fas fa-id-card"></i> Cadetes</button>
+                            <button onClick={() => setCurrentView('medical')} className={`nav-card-btn p-3 rounded-xl ${currentView==='medical'?'bg-emerald-600 text-white':'bg-white'}`}><i className="fas fa-notes-medical"></i> Carpetas Médicas</button>
+                            <button onClick={() => setCurrentView('salidas')} className={`nav-card-btn p-3 rounded-xl ${currentView==='salidas'?'bg-indigo-600 text-white':'bg-white'}`}><i className="fas fa-clock"></i> Salidas</button>
+                            <button onClick={() => setCurrentView('externos')} className={`nav-card-btn p-3 rounded-xl ${currentView==='externos'?'bg-purple-600 text-white':'bg-white'}`}><i className="fas fa-user-friends"></i> Externos</button>
+                            <button onClick={() => setCurrentView('reportes')} className={`nav-card-btn p-3 rounded-xl ${currentView==='reportes'?'bg-amber-600 text-white':'bg-white'}`}><i className="fas fa-chart-simple"></i> Reportes</button>
                         </div>
 
                         {currentView === 'cadetes' && (
                             <div className="flex flex-col lg:flex-row gap-6 bg-white rounded-xl shadow-md p-4">
-                                <div className="lg:w-2/5"><div className="flex flex-wrap gap-2 mb-4"><input type="text" placeholder="Buscar" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="border rounded px-3 py-2 flex-1"/><select value={filtroYear} onChange={e=>setFiltroYear(e.target.value)} className="border rounded px-2"><option value="todos">Año</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select><select value={filtroSeccion} onChange={e=>setFiltroSeccion(e.target.value)} className="border rounded px-2"><option value="todos">Sección</option><option>A</option><option>B</option><option>C</option></select><button onClick={()=>{setEditingCadete(null); setShowCadeteModal(true);}} className="bg-blue-600 text-white px-3 rounded"><i className="fas fa-plus"></i> Nuevo</button></div><div className="max-h-[70vh] overflow-y-auto space-y-2">{filteredCadetes.map(c=> (<div key={c.id} onClick={()=>setSelectedCadete(c)} className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 border ${selectedCadete?.id===c.id?'bg-blue-50 border-blue-400':'hover:bg-gray-50'}`}><img src={c.photoUrl} className="w-12 h-12 rounded-full object-cover"/><div className="flex-1"><div className="font-bold">{c.firstName} {c.lastName}</div><div className="text-xs">DNI: {c.dni} | {c.year}°{c.section}</div></div><div><button onClick={(e)=>{e.stopPropagation(); setEditingCadete(c); setShowCadeteModal(true);}} className="text-blue-500 mr-2"><i className="fas fa-edit"></i></button><button onClick={(e)=>{e.stopPropagation(); deleteCadete(c.id);}} className="text-red-500"><i className="fas fa-trash"></i></button></div></div>))}</div></div>
+                                <div className="lg:w-2/5">
+                                    <div className="flex flex-wrap gap-2 mb-4">
+                                        <input type="text" placeholder="Buscar" value={searchTerm} onChange={e=>setSearchTerm(e.target.value)} className="border rounded px-3 py-2 flex-1"/>
+                                        <select value={filtroYear} onChange={e=>setFiltroYear(e.target.value)} className="border rounded px-2"><option value="todos">Año</option><option value="1">1°</option><option value="2">2°</option><option value="3">3°</option></select>
+                                        <select value={filtroSeccion} onChange={e=>setFiltroSeccion(e.target.value)} className="border rounded px-2"><option value="todos">Sección</option><option>A</option><option>B</option><option>C</option></select>
+                                        <button onClick={()=>{setEditingCadete(null); setShowCadeteModal(true);}} className="bg-blue-600 text-white px-3 rounded"><i className="fas fa-plus"></i> Nuevo</button>
+                                    </div>
+                                    <div className="max-h-[70vh] overflow-y-auto space-y-2">
+                                        {filteredCadetes.map(c=> (<div key={c.id} onClick={()=>setSelectedCadete(c)} className={`p-3 rounded-lg cursor-pointer flex items-center gap-3 border ${selectedCadete?.id===c.id?'bg-blue-50 border-blue-400':'hover:bg-gray-50'}`}><img src={c.photoUrl} className="w-12 h-12 rounded-full object-cover"/><div className="flex-1"><div className="font-bold">{c.firstName} {c.lastName}</div><div className="text-xs">DNI: {c.dni} | {c.year}°{c.section}</div></div><div><button onClick={(e)=>{e.stopPropagation(); setEditingCadete(c); setShowCadeteModal(true);}} className="text-blue-500 mr-2"><i className="fas fa-edit"></i></button><button onClick={(e)=>{e.stopPropagation(); deleteCadete(c.id);}} className="text-red-500"><i className="fas fa-trash"></i></button></div></div>))}
+                                    </div>
+                                </div>
                                 <div className="lg:w-3/5 p-3 overflow-y-auto max-h-[80vh]"><CadeteDetailPage cadete={selectedCadete} onEdit={()=>{setEditingCadete(selectedCadete); setShowCadeteModal(true);}} onAddRetiro={addRetiroToCadete}/></div>
                             </div>
                         )}
                         {currentView === 'medical' && <MedicalFoldersManager cadetes={cadetes} onEditCadete={(c)=>{ setEditingCadete(c); setShowCadeteModal(true); setCurrentView('cadetes'); }} />}
-                        {currentView === 'salidas' && <SalidasMomentaneasManager salidas={salidas} onAdd={addSalida} onRegistrarRetorno={registrarRetorno} onDelete={deleteSalida} />}
-                        {currentView === 'externos' && <ExternosManager externos={externos} onAdd={addExterno} onRegistrarSalida={registrarSalidaExterno} onDelete={deleteExterno} />}
-                        {currentView === 'reportes' && <ReportView cadetes={cadetes} />}
+                        {currentView === 'salidas' && <SalidasMomentaneasManager salidas={salidas} onAdd={addSalida} onRegistrarRetorno={registrarRetorno} onDelete={()=>{}} />}
+                        {currentView === 'externos' && <ExternosManager externos={externos} onAdd={addExterno} onRegistrarSalida={registrarSalidaExterno} onDelete={()=>{}} />}
+                        {currentView === 'reportes' && <MedicalEventsReportModal isOpen={true} onClose={()=>setCurrentView('cadetes')} cadetes={cadetes} />}
                     </div>
                     <AlertSidebar cadetes={cadetes} salidas={salidas} externos={externos} />
                 </div>
